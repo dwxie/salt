@@ -1,0 +1,20 @@
+说明： 没有特别注明，都是dev分支，脚本路径和相关文件
+
+1、下发中央配置，/tmp/camera.env
+    salt -C "E@bj-platweb[1-3]" state.sls application.bj.config.platweb
+    salt -C "E@bj-platweb[1-3]" cmd.run "diff -u /var/www/camera.env /tmp/camera.env" 通过这个来对比差异
+
+    update_center_web.sh 这个脚本可以用来更新中央，需要加上参数
+
+
+2、cp_ini_to_server.sh
+    这个脚本是用来index_recovery用的，可以拷贝配置到线上机器(注意：机器列表可能不对，需要核查)
+
+3、cp_nginx_conf_to_web.sh
+    这个脚本可以下发nginx配置到 中央 和 区域 的机器nginx /tmp/路径下，需要自己再cp至正确路径并改名，用于修改线上web机器群的nginx配置相关
+
+4、state/base/application/bj/config/platweb_2.sls
+    这个是用来处理中央迁移相关的
+
+
+

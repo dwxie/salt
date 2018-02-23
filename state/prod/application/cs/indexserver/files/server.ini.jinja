@@ -1,0 +1,46 @@
+{% set data = salt['pillar.get']('indexserver') -%}
+[GLOBAL]
+log_dir={{ data['GLOBAL']['log_dir'] }}
+log_preName={{ data['GLOBAL']['log_preName'] }}{{ queue_seq }}
+groupID={{ queue_seq }}
+areaID={{ data['GLOBAL']['areaID'] }}
+log_level={{ data['GLOBAL']['log_level'] }}
+cleanTime={{ data['GLOBAL']['cleanTime'] }}
+serverName={{ data['GLOBAL']['serverName'] }}
+httpdPort={{ queue_http_port }}
+
+[BLOCKS]
+log_dir={{ data['BLOCKS']['log_dir'] }}
+
+[RABBITMQ_CONSUMER_DISK]
+url_1={{ data['RABBITMQ_CONSUMER_DISK']['url_1'] }}
+url_2={{ data['RABBITMQ_CONSUMER_DISK']['url_2'] }}
+url_3={{ data['RABBITMQ_CONSUMER_DISK']['url_3'] }}
+vhost={{ data['RABBITMQ_CONSUMER_DISK']['vhost'] }}
+exchange={{ data['RABBITMQ_CONSUMER_DISK']['exchange'] }}
+queue={{ data['RABBITMQ_CONSUMER_DISK']['queue'] }}{{ queue_seq }}
+routing_key={{ data['RABBITMQ_CONSUMER_DISK']['routing_key'] }}{{ queue_seq }}
+prefetch={{ data['RABBITMQ_CONSUMER_DISK']['prefetch'] }}
+
+[RABBITMQ_PRODUCTOR_CONFIRM]
+url_1={{ data['RABBITMQ_PRODUCTOR_CONFIRM']['url_1'] }}
+url_2={{ data['RABBITMQ_PRODUCTOR_CONFIRM']['url_2'] }}
+url_3={{ data['RABBITMQ_PRODUCTOR_CONFIRM']['url_3'] }}
+vhost={{ data['RABBITMQ_PRODUCTOR_CONFIRM']['vhost'] }}
+exchange={{ data['RABBITMQ_PRODUCTOR_CONFIRM']['exchange'] }}
+queue={{ data['RABBITMQ_PRODUCTOR_CONFIRM']['queue'] }}{{ queue_seq }}
+routing_key={{ data['RABBITMQ_PRODUCTOR_CONFIRM']['routing_key'] }}{{ queue_seq }}
+
+[MONGODB]
+timeline_host={{ data['MONGODB']['timeline_host'] }}
+timelineinfo_host={{ data['MONGODB']['timelineinfo_host'] }}
+disk_host={{ data['MONGODB']['disk_host'] }}
+
+[HTTPAGENT]
+http_host={{ data['HTTPAGENT']['http_host'] }}
+http_appid={{ data['HTTPAGENT']['http_appid'] }}
+http_appkey={{ data['HTTPAGENT']['http_appkey'] }}
+
+[RECOVERY]
+log_dir = {{ data['RECOVERY']['log_dir'] }}
+log_fmt = {{ data['RECOVERY']['log_fmt'] }}

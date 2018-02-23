@@ -1,0 +1,2 @@
+cephadmin ALL=(root) NOPASSWD: ALL
+Defaults:cephadmin      !env_reset

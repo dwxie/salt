@@ -1,0 +1,2 @@
+liuyin ALL=(root) NOPASSWD: ALL
+Defaults:liuyin      !env_reset

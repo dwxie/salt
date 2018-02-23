@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('cos:LoopDispatcher:config') -%}
+{{ data|yaml(False) }}

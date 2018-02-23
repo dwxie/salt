@@ -1,0 +1,242 @@
+{% set data = salt['pillar.get']('relay:nginx') -%}
+{% set rtmp_data = data['rtmp'] -%}
+{% set http_data = data['http'] -%}
+user  root;
+worker_processes  1;
+
+events {
+    worker_connections {{ data['events']['worker_connections'] }};
+}
+
+rtmp {
+    server {
+{% for rtmp_port in rtmp_data['server']['listen'] %}
+        listen {{ rtmp_port }};
+{% endfor %}
+        access_log {{ rtmp_data['server']['access_log'] }};
+        application live {
+            live {{ rtmp_data['server']['live']['live'] }};
+            drop_idle_publisher {{ rtmp_data['server']['live']['drop_idle_publisher'] }};
+            idle_streams {{ rtmp_data['server']['live']['idle_streams'] }};
+            wait_video {{ rtmp_data['server']['live']['wait_video'] }};
+{% if rtmp_data['server']['live']['push_when_need']['enable'] == True %}
+            push_when_need {{ rtmp_data['server']['live']['push_when_need']['heartbeat_time'] }};
+{% endif %}
+            local_http_port {{ http_data['server']['listen'][0] }};
+{% if rtmp_data['server']['live']['hls_enable'] == True %}
+
+            hls {{ rtmp_data['server']['live']['hls'] }};
+            hls_path {{ rtmp_data['server']['live']['hls_path'] }};
+            hls_nested {{ rtmp_data['server']['live']['hls_nested'] }};
+            hls_fragment {{ rtmp_data['server']['live']['hls_fragment'] }};
+            hls_playlist_length {{ rtmp_data['server']['live']['hls_playlist_length'] }};
+{% endif %}
+{% if rtmp_data['server']['live']['record_enable'] == True %}
+
+            record {{ rtmp_data['server']['live']['record'] }};
+{% endif %}
+{% if rtmp_data['server']['live']['pulls'] %}
+
+{% for pull in rtmp_data['server']['live']['pulls'] %}
+            pull {{ pull }};
+{% endfor %}
+{% endif %}
+        }
+    }
+}
+
+http {
+    include mime.types;
+    default_type application/octet-stream;
+    sendfile {{ http_data['sendfile'] }};
+    keepalive_timeout {{ http_data['keepalive_timeout'] }};
+
+    proxy_temp_path   /tmp/proxy_temp;
+    proxy_cache_path  /tmp/proxy_cache levels=1:2 keys_zone=snapshot:1m inactive=1h max_size=128m;
+
+    log_format  main  '$remote_addr $remote_port $cid $app_id - $remote_user $msec '
+                      '"$request" $status $body_bytes_sent "$http_referer" '
+                      '$request_time $upstream_response_time $file_type $inner_request';
+    access_log  {{ http_data['access_log'] }}  {{ http_data['access_log_format_name'] }};
+{% if 'proxy_cache_paths' in http_data.keys() %}
+
+{% for proxy_cache_path in http_data['proxy_cache_paths'] %}
+    proxy_cache_path {{ proxy_cache_path['path'] }} levels=1:2 keys_zone={{ proxy_cache_path['keys_zone']['name'] }}:{{ proxy_cache_path['keys_zone']['size'] }} inactive={{ proxy_cache_path['inactive'] }} max_size={{ proxy_cache_path['max_size'] }};
+{% endfor %}
+{% endif %}
+
+    server {
+{% for http_port in http_data['server']['listen'] %}
+        listen       {{ http_port }};
+{% endfor %}
+        server_name  {{ http_data['server']['server_name'] }};
+
+        location / {
+            add_header 'Access-Control-Allow-Origin' *;
+            add_header 'Access-Control-Allow-Credentials' 'true';
+            add_header 'Access-Control-Allow-Methods' 'GET';
+            root   html;
+            index  index.html index.htm;
+        }
+
+        location /hls {
+            types {
+                application/vnd.apple.mpegurl m3u8;
+                video/mp2t ts;
+            }
+            add_header 'Access-Control-Allow-Origin' *;
+            add_header 'Access-Control-Allow-Credentials' 'true';
+            add_header 'Access-Control-Allow-Methods' 'GET';
+            root /tmp;
+            set $check_token "{{ http_data['server']['hls']['check_token'] }}";
+
+            if ($request_uri ~ /hls/([^/]*)/index.m3u8*) {
+                set $cid $1;
+                set $vod_time "";
+            }
+
+            if ($args ~ token\=([^\&]*)) {
+                set $token $1;
+            }
+
+            if ($args ~ access\=([^\&]*)) {
+                set $access $1;
+            }
+
+            if ($args ~ expire\=([^\&]*)) {
+                set $expire $1;
+            }
+
+            if ($request_uri ~ /hls/([^/]*)/([^/]*)\.ts) {
+                set $cid $1;
+                set $check_token "off";
+            }
+        }
+
+        location /flv_live {
+            flv_live on;
+            chunked  on;
+        }
+
+{% if 'proxy' in http_data['server']['live'].keys() %}
+        location ~* ^/live/.*\.ts$ {
+            types {
+                application/vnd.apple.mpegurl m3u8;
+                video/mp2t ts;
+            }
+            add_header 'Access-Control-Allow-Origin' *;
+            add_header 'Access-Control-Allow-Credentials' 'true';
+            add_header 'Access-Control-Allow-Methods' 'GET';
+
+            proxy_hide_header 'Access-Control-Allow-Origin';
+            proxy_hide_header 'Access-Control-Allow-Credentials';
+            proxy_hide_header 'Access-Control-Allow-Methods';
+
+            set $proxy_url '';
+            proxy_pass $proxy_url;
+            set $check_token "{{ http_data['server']['live']['check_token'] }}";
+
+            if ($request_uri ~ /live/([^/]*)/([^/]*)\.ts) {
+                set $cid $1;
+            }
+{% set proxy_cache = http_data['server']['live']['proxy']['ts']['proxy_cache'] %}
+{% if proxy_cache['enable'] == True %}
+
+            proxy_cache {{ proxy_cache['zone'] }};
+            proxy_cache_revalidate on;
+            proxy_cache_valid 200 20s;
+            proxy_cache_key $host$uri$is_args$args;
+            add_header X-Proxy-Cache $upstream_cache_status;
+{% endif %}
+        }
+
+        location ~* ^/live/.*index\.m3u8$ {
+            types {
+                application/vnd.apple.mpegurl m3u8;
+                video/mp2t ts;
+            }
+            add_header 'Access-Control-Allow-Origin' *;
+            add_header 'Access-Control-Allow-Credentials' 'true';
+            add_header 'Access-Control-Allow-Methods' 'GET';
+
+            proxy_hide_header 'Access-Control-Allow-Origin';
+            proxy_hide_header 'Access-Control-Allow-Credentials';
+            proxy_hide_header 'Access-Control-Allow-Methods';
+
+            set $proxy_url '';
+            proxy_pass $proxy_url;
+            set $check_token "{{ http_data['server']['live']['check_token'] }}";
+
+            if ($request_uri ~ /live/([^/]*)/index.m3u8*) {
+                set $cid $1;
+            }
+        }
+{% else %}
+        location /live {
+            types {
+                application/vnd.apple.mpegurl m3u8;
+                video/mp2t ts;
+            }
+            add_header 'Access-Control-Allow-Origin' *;
+            add_header 'Access-Control-Allow-Credentials' 'true';
+            add_header 'Access-Control-Allow-Methods' 'GET';
+            alias /tmp/hls;
+            set $check_token "{{ http_data['server']['live']['check_token'] }}";
+
+            if ($request_uri ~ /live/([^/]*)/index.m3u8*) {
+                set $cid $1;
+                set $vod_time "";
+            }
+
+            if ($args ~ token\=([^\&]*)) {
+                set $token $1;
+            }
+
+            if ($args ~ access\=([^\&]*)) {
+                set $access $1;
+            }
+
+            if ($args ~ expire\=([^\&]*)) {
+                set $expire $1;
+            }
+
+            if ($request_uri ~ /live/([^/]*)/([^/]*)\.ts) {
+                set $cid $1;
+                set $check_token "off";
+            }
+        }
+{% endif %}
+
+        location /stat {
+            rtmp_stat all;
+            rtmp_stat_stylesheet stat.xsl;
+            access_log off;
+        }
+
+        location /stat.xsl {
+            root html;
+            access_log off;
+        }
+{% if http_data['server']['snapshot_enable'] == True %}
+
+        location /snapshot {
+            check_jpg;
+            expires 30d;
+            if ($request_uri ~ /snapshot/([^/]*)\.jpg) {
+                set $cid $1;
+            }
+        }
+{% endif %}
+{% if http_data['server']['info_enable'] == True %}
+
+        location /info {
+            statistics;
+        }
+{% endif %}
+
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+    }
+}

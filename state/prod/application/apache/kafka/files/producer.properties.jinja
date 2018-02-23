@@ -1,0 +1,3 @@
+{% set data = salt['pillar.get']('apache:kafka:config:producer') -%}
+bootstrap.servers = {{ data['bootstrap']['servers']|join(',') }}
+compression.type = none

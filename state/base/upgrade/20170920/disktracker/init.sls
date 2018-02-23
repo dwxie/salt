@@ -1,0 +1,11 @@
+include:
+  - .backup
+  - .diskconfig
+  - .diskexchange
+  - .diskgroup
+  - .diskrestore
+  - .diskswap
+  - .disktracker
+  - .groupassign
+  - .groupclean
+  - .groupswitch

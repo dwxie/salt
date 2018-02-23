@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('cos:recordindex:config') -%}
+{{ data|yaml(False) }}

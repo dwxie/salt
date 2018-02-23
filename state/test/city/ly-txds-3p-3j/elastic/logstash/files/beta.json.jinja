@@ -1,0 +1,41 @@
+input {
+    #beats {
+    #    port => 5055
+    #}
+    stdin {
+        type => "http_access_log"
+    }
+}
+
+filter {
+    if [type] == 'http_access_log' {
+        grok {
+            match => {"message" => "%{IP:server_ip} %{INT:port:int}\s(?<cid>.+?)\s(?<appid>.+?)\s%{DATA} %{DATA} %{INT:timestamp:int} \"%{WORD:http_method}\s(?<request>.*) (?<protocol>.*)\"\s%{INT:status_code:int} %{INT:flow:int}\s+\"(?<http_referer>.*)\"\s+(?<request_time>[0-9.-]{1,})\s+(?<response_time>[0-9.-]{1,})\s*(?<file_type>[0-9]*)\s*(?<inner_request>[0-9]*)\s*(?<reserve_antelope>.*)"}
+        }
+        if [request] =~ /^\/hls\/.*/ {
+            grok {
+                match => {"request" => "^/hls/%{INT:cid:int}(?<hls_tail>.*)"}
+            }
+        }
+        mutate {
+            remove_field => ["message","hls_tail","reserve_antelope"]
+        }
+    }
+}
+
+output {
+    #if [type] == 'invalid' {
+    #    elasticsearch {
+    #        hosts => ['192.168.2.210:9200', '192.168.2.214:9200', '192.168.2.218:9200']
+    #        index => "beta-%{+YYYY.MM.dd}"
+    #        codec => json
+    #        document_type => "%{type}"
+    #        flush_size => 2000
+    #        template_overwrite => true
+    #        manage_template => true
+    #    }
+    #}
+    stdout {
+        codec => rubydebug
+    }
+}

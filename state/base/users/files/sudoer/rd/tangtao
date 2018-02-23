@@ -1,0 +1,2 @@
+tangtao ALL=(root) NOPASSWD: ALL
+Defaults:tangtao      !env_reset

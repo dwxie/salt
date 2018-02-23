@@ -1,0 +1,27 @@
+/opt/nginx-tool/logs/*.log
+/opt/nginx-tool/sbin/rtmp_extend_error.log
+/opt/nginx-tool-fs-sjz1961/logs/*.log
+/opt/nginx-tool-fs-sjz1961/sbin/*.log
+/opt/nginx-tool-sjz-fs1971/logs/*.log
+/opt/nginx-tool-sjz-fs1971/sbin/*.log {
+    su root list
+    daily
+    rotate 7
+    missingok
+    notifempty
+    delaycompress
+    compress
+    create 640 root root
+    sharedscripts
+    postrotate
+        if [ -f /opt/nginx-tool/logs/nginx.pid ]; then
+            kill -USR1 `cat /opt/nginx-tool/logs/nginx.pid`
+        fi
+        if [ -f /opt/nginx-tool-fs-sjz1961/logs/nginx.pid ]; then
+            kill -USR1 `cat /opt/nginx-tool-fs-sjz1961/logs/nginx.pid`
+        fi
+        if [ -f /opt/nginx-tool-sjz-fs1971/logs/nginx.pid ]; then
+            kill -USR1 `cat /opt/nginx-tool-sjz-fs1971/logs/nginx.pid`
+        fi
+    endscript
+}

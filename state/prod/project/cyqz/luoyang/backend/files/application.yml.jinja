@@ -1,0 +1,114 @@
+{% set data = salt['pillar.get']('cyqz:backend:application') -%}
+server:
+    # 服务端口号
+    port: {{ extrn_data['server']['port'] }}
+    # 服务会话前缀，如：http://domain/cyqz
+    context-path: /cyqz
+    tomcat:
+        max-threads: 2000
+        uri-encoding: UTF-8
+spring:
+    # 数据源访问配置
+    datasource:
+        # 数据库名称
+        name: {{ data['spring']['datasource']['name'] }}
+        # 数据库url
+        url: {{ data['spring']['datasource']['url'] }}
+        # 数据库用户名
+        username: {{ data['spring']['datasource']['username'] }}
+        # 数据库密码
+        password: {{ data['spring']['datasource']['password'] }}
+        # 使用druid数据源，保持默认
+        type: com.alibaba.druid.pool.DruidDataSource
+        driver-class-name: com.mysql.jdbc.Driver
+        # 初始化大小，最小，最大
+        initialSize: 5
+        minIdle: 5
+        maxActive: 20
+        # 获取连接等待超时的时间
+        maxWait: 60000
+        # 间隔多久进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+        timeBetweenEvictionRunsMillis: 60000
+        # 一个连接在池中最小生存的时间
+        minEvictableIdleTimeMillis: 300000
+        validationQuery: select 'x'
+        testWhileIdle: true
+        testOnBorrow: false
+        testOnReturn: false
+        # 打开PSCache，并且指定每个连接上PSCache的大小
+        poolPreparedStatements: true
+        maxOpenPreparedStatements: 20
+        filters: stat
+        # 记录慢SQL
+        connectionProperties: druid.stat.slowSqlMillis=5000
+    #Redis配置
+    redis:
+        #数据库下标
+        database: 0
+        #Redis服务器地址
+        #host: {{ data['spring']['redis']['host'] }}
+        #Redis密码，如果服务端未设置，注释即可
+        password: {{ data['spring']['redis']['password'] }}
+        #port: {{ data['spring']['redis']['port'] }}
+        pool:
+            max-idle: 8
+            min-idle: 0
+            max-active: 8
+            max-wait: -1
+        # sentinel 配置
+        sentinel:
+            master: {{ data['spring']['redis']['sentinel']['master'] }}
+            nodes: {{ data['spring']['redis']['sentinel']['nodes'] }}
+
+multipart:
+    maxFileSize: 20Mb
+    maxRequestSize: 100Mb
+
+# config为自定义配置项
+config:
+    # 服务器节点标识  如:s1/s2/s3
+    serverNode: {{ data['config']['serverNode'] }}
+    # web端访问地址: http://domain
+    webHost: {{ data['config']['webHost'] }}
+
+    # 访问案件图片的CDN域名
+    caseCDN: {{ data['config']['caseCDN'] }}
+
+    # 媒体文件存储路径  需要创建此目录,并在此目录下建立 source, target, case, apks, user, temp 这几个目录
+    mediaRoot: {{ data['config']['mediaRoot'] }}
+
+    mediaRootOther:
+{% if data['config']['serverNode'] != "s1" %}
+        - /data1/cyqz/media/
+{% endif %}
+{% if data['config']['serverNode'] != "s2" %}
+        - /data2/cyqz/media/
+{% endif %}
+
+    # 是否系统运行后初始化数据至redis
+    redisInit: {{ extrn_data['config']['redisInit'] }}
+
+    # 云信配置
+    yunXin:
+        appKey: a4111f114c29cede8aa98ca7f70055b6
+        appSecret: 964f5cef3652
+
+    # 极光推送配置
+    Jpush:
+        appKey: f8e964a79620ba732ce43cd0
+        appSecret: e55255e99996694fffa4323b
+        #离线小时保留时长1小时，单位秒
+        timeToLive: 3600
+        #APNs true生产环境,false开发环境默认false
+        apnsProduct: true
+
+    fileLimit:
+        minSize: 10240
+        maxSize: 10485760
+
+    # Cache-Control配置
+    cacheControl:
+        banner: 5
+        recent: 5
+        recent_maxid: 600
+        case_id: 600

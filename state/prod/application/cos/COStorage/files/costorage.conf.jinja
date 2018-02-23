@@ -1,0 +1,27 @@
+{% set data = salt['pillar.get']('cos:COStorage:config') -%}
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <partitions>
+{% for partition in data['partitions'] %}
+        <partition>
+            <enable>{{ partition['enable'] }}</enable>
+            <automount>{{ partition['automount'] }}</automount>
+            <fs_type>{{ partition['fs_type'] }}</fs_type>
+            <disk_type>{{ partition['disk_type'] }}</disk_type>
+            <index_backup_partition_name>/dev/disk/by-id/wwn-{{ partition['wwn'] }}-part1</index_backup_partition_name>
+            <index_backup_partition_mount>/codisk/{{ loop.index }}/index_backup</index_backup_partition_mount>
+            <index_partition_name>/dev/disk/by-id/wwn-{{ partition['wwn'] }}-part2</index_partition_name>
+            <index_partition_mount>/codisk/{{ loop.index }}/index</index_partition_mount>
+            <data_partition_name>/dev/disk/by-id/wwn-{{ partition['wwn'] }}-part3</data_partition_name>
+            <data_partition_mount>/codisk/{{ loop.index }}/data</data_partition_mount>
+            <public_ip>{{ data['public_ip'] }}</public_ip>
+            <local_ip>{{ data['local_ip'] }}</local_ip>
+            <upload_port>{{ partition['upload_port'] }}</upload_port>
+            <query_port>{{ partition['query_port'] }}</query_port>
+            <http_listen_ip>{{ data['http_listen_ip'] }}</http_listen_ip>
+            <tracker_server_ip>{{ data['tracker_server_ip'] }}</tracker_server_ip>
+            <tracker_server_port>{{ data['tracker_server_port'] }}</tracker_server_port>
+        </partition>
+{% endfor %}
+    </partitions>
+</config>

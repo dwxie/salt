@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('cos:filedelete:config') -%}
+{{ data|yaml(False) }}

@@ -1,0 +1,34 @@
+{% set data = salt['pillar.get']('apache:kafka:config:server') -%}
+broker.id = {{ data['broker']['id'] }}
+broker.list = {{ data['broker']['list']|join(',') }}
+
+advertised.listeners = {{ data['advertised']['listeners'] }}
+listeners = {{ data['listeners'] }}
+
+num.network.threads = {{ data ['num']['network']['threads'] }}
+# IO thread < disk number
+num.io.threads = {{ data ['num']['io']['threads'] }}
+# number of partitions
+num.partitions = {{ data['num']['partitions'] }}
+num.recovery.threads.per.data.dir = {{ data['num']['recovery']['threads']['per']['data']['dir'] }}
+
+producer.type = {{ data['producer']['type'] }}
+default.replication.factor = {{ data['default']['replication']['factor'] }}
+delete.topic.enable = {{ data['delete']['topic']['enable'] }}
+auto.create.topics.enable = {{ data['auto']['create']['topics']['enable'] }}
+auto.leader.rebalance.enable = {{ data['auto']['leader']['rebalance']['enable'] }}
+
+# where to storage data
+log.dirs = {{ data['log']['dirs'] }}
+log.cleanup.policy = {{ data['log']['cleanup']['policy'] }}
+log.retention.hours = {{ data['log']['retention']['hours'] }}
+log.retention.check.interval.ms = {{ data['log']['retention']['check']['interval']['ms'] }}
+log.segment.bytes = {{ data['log']['segment']['bytes'] }}
+
+socket.send.buffer.bytes = {{ data['socket']['send']['buffer']['bytes'] }}
+socket.receive.buffer.bytes = {{ data['socket']['receive']['buffer']['bytes'] }}
+socket.request.max.bytes = {{ data['socket']['request']['max']['bytes'] }}
+
+zookeeper.connect = {{ data['zookeeper']['connect']|join(',') }}
+zookeeper.connection.timeout.ms = {{ data['zookeeper']['connection']['timeout']['ms'] }}
+zookeeper.session.timeout.ms = {{ data['zookeeper']['session']['timeout']['ms'] }}

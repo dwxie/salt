@@ -1,0 +1,2 @@
+luchaoshu ALL=(root) NOPASSWD: ALL
+Defaults:luchaoshu      !env_reset

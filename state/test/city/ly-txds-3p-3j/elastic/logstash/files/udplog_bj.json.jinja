@@ -1,0 +1,28 @@
+{% set data = salt['pillar.get']('elastic:logstash:config:udplog_bj') -%}
+input {
+    rabbitmq {
+        host => '{{ data['input']['rabbitmq']['host'] }}'
+        vhost => '{{ data['input']['rabbitmq']['vhost'] }}'
+        user => '{{ data['input']['rabbitmq']['user'] }}'
+        password => '{{ data['input']['rabbitmq']['password'] }}'
+        key => '{{ data['input']['rabbitmq']['key'] }}'
+        queue => '{{ data['input']['rabbitmq']['queue'] }}'
+        prefetch_count => {{ data['input']['rabbitmq']['prefetch_count'] }}
+        threads => {{ data['input']['rabbitmq']['threads'] }}
+        add_field => {
+            "broker" => '{{ data['input']['rabbitmq']['broker'] }}'
+        }
+    }
+}
+
+output {
+    elasticsearch {
+        hosts => {{ data['output']['elasticsearch']['hosts'] }}
+        codec => {{ data['output']['elasticsearch']['codec'] }}
+        index => "{{ data['output']['elasticsearch']['index'] }}"
+        flush_size => {{ data['output']['elasticsearch']['flush_size'] }}
+        document_type => "{{ data['output']['elasticsearch']['document_type'] }}"
+        idle_flush_time => {{ data['output']['elasticsearch']['idle_flush_time'] }}
+        #workers => 6
+    }
+}

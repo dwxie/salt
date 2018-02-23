@@ -1,0 +1,205 @@
+1、潮树的初始化
+
+
+
+2、小虎的初始化，在潮树的基础上，后续执行。
+    a、建立指定的目录，用于sa_tools的相关脚本路径
+
+    所有都需要
+
+        salt "hostname" cmd.run "mkdir -p /opt/sa_tools/scripts/sh" (单个机器执行)
+        salt -N "g_list_" cmd.run "mkdir -p /opt/sa_tools/scripts/sh" (一个组的机器执行)
+        salt -L "a,b,c" cmd.run "mkdir -p /opt/sa_tools/scripts/sh" (a,b,c 3个机器执行)
+
+        salt "hostname" cmd.run "mkdir -p /opt/sa_tools/scripts/py"
+        salt -N "g_list_" cmd.run "mkdir -p /opt/sa_tools/scripts/py"
+        salt -L "a,b,c" cmd.run "mkdir -p /opt/sa_tools/scripts/py"
+
+        salt "hostname" cmd.run "mkdir -p /opt/sa_tools/scripts/py/tib"
+        salt -N "g_list_" cmd.run "mkdir -p /opt/sa_tools/scripts/py/tib"
+        salt -L "a,b,c" cmd.run "mkdir -p /opt/sa_tools/scripts/py/tib"
+
+    b、拷贝相关必须的脚本至目标主机的特定路径下
+
+    所有都需要
+
+        进入到code项目的dev分支下，拉去最新的代码,然后再下发
+        这一步是为了把一些函数库和自定义的可调用脚本先放上去.
+        cd /usr/local/src/git/code/new/py/zabbix_custom/script/ && git checkout dev && git pull
+
+        salt-cp "hostname" ./tib/__init__.py /opt/sa_tools/scripts/py/tib/
+        salt-cp "hostname" ./tib/funcs.py /opt/sa_tools/scripts/py/tib/
+        salt-cp "hostname" ./tib/sql.py /opt/sa_tools/scripts/py/tib/
+        salt-cp "hostname" ./tib/logs.py /opt/sa_tools/scripts/py/tib/
+        salt-cp "hostname" ./tib/global_vars.py /opt/sa_tools/scripts/py/tib/
+
+        salt-cp -N "g_list_" ./tib/__init__.py /opt/sa_tools/scripts/py/tib/
+        salt-cp -N "g_list_" ./tib/funcs.py /opt/sa_tools/scripts/py/tib/
+        salt-cp -N "g_list_" ./tib/sql.py /opt/sa_tools/scripts/py/tib/
+        salt-cp -N "g_list_" ./tib/logs.py /opt/sa_tools/scripts/py/tib/
+        salt-cp -N "g_list_" ./tib/global_vars.py /opt/sa_tools/scripts/py/tib/
+
+        salt-cp -L "a,b,c" ./tib/__init__.py /opt/sa_tools/scripts/py/tib/
+        salt-cp -L "a,b,c" ./tib/funcs.py /opt/sa_tools/scripts/py/tib/
+        salt-cp -L "a,b,c" ./tib/sql.py /opt/sa_tools/scripts/py/tib/
+        salt-cp -L "a,b,c" ./tib/logs.py /opt/sa_tools/scripts/py/tib/
+        salt-cp -L "a,b,c" ./tib/global_vars.py /opt/sa_tools/scripts/py/tib/
+
+        这一步是为了拷贝一些监控用到的脚本和相关的agentd配置文件去指定机器上，这里拷贝的脚本和配置都是每个机器都需要的监控。
+        注意：执行拷贝之前最好先去机器上/usr/local/services/zabbix/etc/zabbix_agentd.conf.d/路径下，看下有没有同名的文件，
+                如果有，那就看下原有的文件和将要拷贝的文件是不是有什么差异。
+        [如果觉得这里操作有点繁琐，那就自己想办法优化，好在现在zabbix_agentd配置每天都有备份，失误了，也可以恢复]
+
+        cd /usr/local/src/git/code && git checkout dev && git pull
+
+        salt-cp "hostname" ./new/py/zabbix_custom/conf/topvdn.all.conf /usr/local/services/zabbix/etc/zabbix_agentd.conf.d/
+        salt-cp "hostname" ./new/py/zabbix_custom/conf/topvdn.all.lld.conf /usr/local/services/zabbix/etc/zabbix_agentd.conf.d/
+        salt-cp "hostname" ./new/py/zabbix_custom/script/get_all_monitor_process.py /opt/sa_tools/scripts/py/
+        salt-cp "hostname" ./new/py/zabbix_custom/script/get_all_net_interface_name.py /opt/sa_tools/scripts/py/
+        salt-cp "hostname" ./new/py/zabbix_custom/script/get_net_interface_speed.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./new/sh/make_sure_sh_and_py_executable.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./new/sh/check_rc_local_exec.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./new/py/zabbix_custom/script/get_net_interfaces.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./new/py/zabbix_custom/script/check_if_key_exist_in_zabbix_agent_conf.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./new/py/zabbix_custom/script/check_process.py /opt/sa_tools/scripts/py/
+        salt-cp "hostname" ./new/py/zabbix_custom/script/check_disk_smart_status.py /opt/sa_tools/scripts/py/
+        salt-cp "hostname" ./new/py/zabbix_custom/script/check_some_logs_warn.py /opt/sa_tools/scripts/py/
+
+        salt-cp -N "g_list_" ./new/py/zabbix_custom/conf/topvdn.all.conf /usr/local/services/zabbix/etc/zabbix_agentd.conf.d/
+        salt-cp -N "g_list_" ./new/py/zabbix_custom/conf/topvdn.all.lld.conf /usr/local/services/zabbix/etc/zabbix_agentd.conf.d/
+        salt-cp -N "g_list_" ./new/py/zabbix_custom/script/get_all_monitor_process.py /opt/sa_tools/scripts/py/
+        salt-cp -N "g_list_" ./new/py/zabbix_custom/script/get_all_net_interface_name.py /opt/sa_tools/scripts/py/
+        salt-cp -N "g_list_" ./new/py/zabbix_custom/script/get_net_interface_speed.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list_" ./new/py/zabbix_custom/script/get_net_interfaces.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list_" ./new/sh/check_rc_local_exec.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list_" ./new/sh/make_sure_sh_and_py_executable.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list_" ./new/py/zabbix_custom/script/check_if_key_exist_in_zabbix_agent_conf.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list_" ./new/py/zabbix_custom/script/check_process.py /opt/sa_tools/scripts/py/
+        salt-cp -N "g_list_" ./new/py/zabbix_custom/script/check_disk_smart_status.py /opt/sa_tools/scripts/py/
+
+        salt-cp -L "a,b,c" ./new/py/zabbix_custom/conf/topvdn.all.conf /usr/local/services/zabbix/etc/zabbix_agentd.conf.d/
+        salt-cp -L "a,b,c" ./new/py/zabbix_custom/conf/topvdn.all.lld.conf /usr/local/services/zabbix/etc/zabbix_agentd.conf.d/
+        salt-cp -L "a,b,c" ./new/py/zabbix_custom/script/get_all_monitor_process.py /opt/sa_tools/scripts/py/
+        salt-cp -L "a,b,c" ./new/py/zabbix_custom/script/get_all_net_interface_name.py /opt/sa_tools/scripts/py/
+        salt-cp -L "a,b,c" ./new/sh/make_sure_sh_and_py_executable.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./new/sh/check_rc_local_exec.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./new/py/zabbix_custom/script/get_net_interface_speed.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./new/py/zabbix_custom/script/get_net_interfaces.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./new/py/zabbix_custom/script/check_if_key_exist_in_zabbix_agent_conf.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./new/py/zabbix_custom/script/check_process.py /opt/sa_tools/scripts/py/
+        salt-cp -L "a,b,c" ./new/py/zabbix_custom/script/check_disk_smart_status.py /opt/sa_tools/scripts/py/
+
+
+    c、防火墙,阻止除了跳板机和ly-salt机器以外的IP登录ssh 10022端口
+
+    所有都需要
+
+
+        salt "hostname" state.sls base.block_10022
+        salt -N "g_list_" state.sls base.block_10022
+        salt -L "a,b,c" state.sls base.block_10022
+
+    d、添加一个定时检测agentd挂掉自动拉起的crontab任务
+
+    所有都需要
+
+
+        salt "hostname" state.sls base.check_agentd
+        salt -N "g_list_" state.sls base.check_agentd
+        salt -L "a,b,c" state.sls base.check_agentd
+
+    e、针对散点机器，添加ntpdate同步监控脚本和conf
+
+        salt "hostname" state.sls ntp.ntpdate
+        salt -N "g_list_" state.sls ntp.ntpdate
+        salt -L "a,b,c" state.sls ntp.ntpdate
+
+    f、针对各大区机器，添加ntpdate同步监控脚本和conf(注意，需要先在nodegroup.conf里面加上对应的机器[机器加在每个大区的大组里面]，然后重启salt-master，不然剧本会执行过程中失败)
+
+    所有都需要
+
+
+        salt "hostname" state.sls application.ntp saltenv=prod
+        salt -N "g_list_" state.sls application.ntp saltenv=prod
+        salt -L "a,b,c" state.sls application.ntp saltenv=prod
+
+    g、定时备份zabbix conf文件的crontab任务
+
+    所有都需要
+
+
+        salt "hostname" state.sls zabbix.add_zabbix_backup_conf
+        salt -N "g_list_" state.sls zabbix.add_zabbix_backup_conf
+        salt -L "a,b,c" state.sls zabbix.add_zabbix_backup_conf
+
+    h、拷贝topvdn.custom.conf文件,有需要时再拷贝
+
+    这里的情况，如果对端机器没有这个topvdn.custom.conf文件，那么就需要拷贝，如果有，那就不需要。
+
+        salt-cp "hostname" ./new/py/zabbix_custom/conf/topvdn.custom.conf /usr/local/services/zabbix/etc/zabbix_agentd.conf.d/
+
+        salt-cp -N "g_list_" ./new/py/zabbix_custom/conf/topvdn.custom.conf /usr/local/services/zabbix/etc/zabbix_agentd.conf.d/
+
+        salt-cp -L "a,b,c" ./new/py/zabbix_custom/conf/topvdn.custom.conf /usr/local/services/zabbix/etc/zabbix_agentd.conf.d/
+
+    i、拷贝部分脚本或者工具至机器上
+
+    所有都需要，初始化时完成
+
+    code dev分支， cd /usr/local/src/git/code/tools && git checkout dev && git pull
+
+        salt-cp "hostname" ./care_for_arp_problem.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./si.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./si_2.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./query_ip.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./si_own.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./Format_script.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./si_own_2.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./get_process_info.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./si_output.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./si_output_2.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./check_disk_io.sh /opt/sa_tools/scripts/sh/
+        salt-cp "hostname" ./Ginfo.sh /bin/
+        salt-cp "hostname" ./ps_mem /bin/
+        salt-cp "hostname" ./only_send_wechat_to_P1.py /opt/sa_tools/scripts/py/
+        salt-cp "hostname" ./only_send_wechat_to_tib.py /opt/sa_tools/scripts/py/
+        salt "hostname" cmd.run "chmod +x /bin/ps_mem && chmod +x /bin/Ginfo.sh"
+        salt "hostname" cmd.run "mkdir -p /usr/local/services/zabbix/files"
+
+        salt-cp -N "g_list" ./care_for_arp_problem.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list" ./si.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list" ./si_2.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list" ./si_own_2.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list" ./si_own.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list" ./query_ip.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list" ./get_process_info.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list" ./Format_script.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list" ./si_output_2.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list" ./si_output.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list" ./check_disk_io.sh /opt/sa_tools/scripts/sh/
+        salt-cp -N "g_list" ./Ginfo.sh /bin/
+        salt-cp -N "g_list" ./ps_mem /bin/
+        salt-cp -N "g_list" ./only_send_wechat_to_P1.py /opt/sa_tools/scripts/py/
+        salt-cp -N "g_list" ./only_send_wechat_to_tib.py /opt/sa_tools/scripts/py/
+        salt -N "g_list" cmd.run "chmod +x /bin/ps_mem && chmod +x /bin/Ginfo.sh"
+        salt -N "g_list" cmd.run "mkdir -p /usr/local/services/zabbix/files"
+
+        salt-cp -L "a,b,c" ./care_for_arp_problem.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./si.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./si_own.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./si_2.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./si_own_2.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./query_ip.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./get_process_info.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./si_output.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./Format_script.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./si_output_2.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./check_disk_io.sh /opt/sa_tools/scripts/sh/
+        salt-cp -L "a,b,c" ./Ginfo.sh /bin/
+        salt-cp -L "a,b,c" ./ps_mem /bin/
+        salt-cp -L "a,b,c" ./only_send_wechat_to_P1.py /opt/sa_tools/scripts/py/
+        salt-cp -L "a,b,c" ./only_send_wechat_to_tib.py /opt/sa_tools/scripts/py/
+        salt -L "a,b,c" cmd.run "chmod +x /bin/ps_mem && chmod +x /bin/Ginfo.sh"
+        salt -L "a,b,c" cmd.run "mkdir -p /usr/local/services/zabbix/files"
+
+

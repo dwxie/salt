@@ -1,0 +1,2 @@
+kangxiaoqi ALL=(root) NOPASSWD: ALL
+Defaults:kangxiaoqi      !env_reset

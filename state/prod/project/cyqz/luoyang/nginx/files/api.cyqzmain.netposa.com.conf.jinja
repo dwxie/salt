@@ -1,0 +1,314 @@
+{% set data = salt['pillar.get']('cyqz:frontend') -%}
+proxy_cache_path proxy_cache_api levels=1:2 keys_zone=cache_api:4096m inactive=2d max_size=30g;
+limit_req_zone $binary_remote_addr zone=api_allips:10m rate=60r/s;
+
+server {
+    listen 443 ssl;
+    server_name cyqzmaint.netposa.com;
+
+    charset utf-8;
+    root /opt/cyqz_web/app/static/;
+    index index.html index.htm;
+
+    access_log logs/api.cyqzmain.netposa.com.access.log cyqz;
+    error_log logs/api.cyqzmain.netposa.com.error.log;
+
+    client_body_buffer_size  16K;
+    client_header_buffer_size  1k;
+    client_max_body_size  10m;
+    large_client_header_buffers  4  16k;
+
+    ssl_certificate /usr/local/services/nginx/conf/star.netposa.com.crt;
+    ssl_certificate_key /usr/local/services/nginx/conf/star.netposa.com.key;
+    ssl_prefer_server_ciphers on;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_dhparam /usr/local/services/nginx/conf/dhparam.pem;
+    ssl_ciphers "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA:ECDHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES256-GCM-SHA384:AES128-GCM-SHA256:AES256-SHA256:AES128-SHA256:AES256-SHA:AES128-SHA:DES-CBC3-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4";
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    add_header Strict-Transport-Security max-age=63072000;
+    add_header X-Frame-Options DENY;
+    add_header X-Content-Type-Options nosniff;
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   html;
+    }
+
+    if ($request_method !~ ^(GET|HEAD|POST|DELETE)$) {
+        return 404;
+    }
+
+    location ^~ /static/ {
+        alias /opt/cyqz_web/app/static/;
+    }
+
+    location ^~ /server/ {
+        proxy_pass          http://backend_api/;
+        proxy_redirect      default;
+        proxy_cookie_path   /cyqz/ /;
+        proxy_set_header    Host $host:$server_port;
+        proxy_set_header    X-Real-IP $remote_addr;
+        proxy_set_header    X-Forwarded-Host $host:$server_port;
+        proxy_set_header    X-Forwarded-Server $host:$server_port;
+        proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+
+        #limit_req zone=api_allips burst=5 nodelay;
+    }
+
+    location ^~ /server/cyqz/api/cases/ {
+        proxy_cache cache_api;
+        proxy_cache_revalidate on;
+        proxy_cache_valid 200 301 302 304 5s;
+        proxy_cache_valid any 15s;
+        proxy_cache_key $host$uri$is_args$args;
+        add_header X-Proxy-Cache $upstream_cache_status;
+
+        rewrite /server/(.+)$ /$1 break;
+        proxy_pass          http://backend_api;
+        proxy_redirect      default;
+        proxy_cookie_path   /cyqz/ /;
+        proxy_set_header    Host $host:$server_port;
+        proxy_set_header    X-Real-IP $remote_addr;
+        proxy_set_header    X-Forwarded-Host $host:$server_port;
+        proxy_set_header    X-Forwarded-Server $host:$server_port;
+        proxy_set_header    X-Forwarded-For  $proxy_add_x_forwarded_for;
+
+        #limit_req zone=api_allips burst=5 nodelay;
+    }
+
+    location ^~ /s1-img/case/ {
+{% if data['node'] == "1" %}
+        alias /data{{ data['node'] }}/cyqz/media/case/;
+
+        set $width 150;
+        set $height 100;
+
+        if ( $request_uri ~* "^/s([0-9]{1,2})-img/(.*)$" ) {
+            set $pic_path $2;
+        }
+
+        if ($query_string ~* "^width=(\d+)&height=(\d+)$") {
+            set $width $1;
+            set $height $2;
+
+            set $image_uri image_resize/$pic_path;
+
+            proxy_pass https://192.168.2.221/$image_uri;
+            break;
+        }
+        proxy_set_header    Host $host;
+
+        proxy_cache cache_api;
+        proxy_cache_revalidate on;
+        proxy_cache_valid 200 301 302 304 1d;
+        proxy_cache_valid any 15s;
+        proxy_cache_key $host$uri$is_args$args;
+        add_header X-Proxy-Cache $upstream_cache_status;
+{% else %}
+        proxy_pass          https://192.168.2.221/s1-img/case/;
+        proxy_set_header    Host $host;
+{% endif %}
+    }
+
+    location ^~ /s2-img/case/ {
+{% if data['node'] == "2" %}
+        alias /data{{ data['node'] }}/cyqz/media/case/;
+
+        set $width 150;
+        set $height 100;
+
+        if ( $request_uri ~* "^/s([0-9]{1,2})-img/(.*)$" ) {
+            set $pic_path $2;
+        }
+
+        if ($query_string ~* "^width=(\d+)&height=(\d+)$") {
+            set $width $1;
+            set $height $2;
+
+            set $image_uri image_resize/$pic_path;
+
+            proxy_pass https://192.168.2.224/$image_uri;
+            break;
+        }
+        proxy_set_header    Host $host;
+
+        proxy_cache cache_api;
+        proxy_cache_revalidate on;
+        proxy_cache_valid 200 301 302 304 1d;
+        proxy_cache_valid any 15s;
+        proxy_cache_key $host$uri$is_args$args;
+        add_header X-Proxy-Cache $upstream_cache_status;
+{% else %}
+        proxy_pass          https://192.168.2.224/s2-img/case/;
+        proxy_set_header    Host $host;
+{% endif %}
+    }
+
+    location ^~ /s1-img/user/ {
+{% if data['node'] == "1" %}
+        alias /data{{ data['node'] }}/cyqz/media/user/;
+
+        set $width 150;
+        set $height 100;
+
+        if ( $request_uri ~* "^/s([0-9]{1,2})-img/(.*)$" ) {
+            set $pic_path $2;
+        }
+
+        if ($query_string ~* "^width=(\d+)&height=(\d+)$") {
+            set $width $1;
+            set $height $2;
+
+            set $image_uri image_resize/$pic_path;
+
+            proxy_pass https://192.168.2.221/$image_uri;
+            break;
+        }
+        proxy_set_header    Host $host;
+
+        proxy_cache cache_api;
+        proxy_cache_revalidate on;
+        proxy_cache_valid 200 301 302 304 3s;
+        proxy_cache_valid any 15s;
+        proxy_cache_key $host$uri$is_args$args;
+        add_header X-Proxy-Cache $upstream_cache_status;
+{% else %}
+        proxy_pass          https://192.168.2.221/s1-img/user/;
+        proxy_set_header    Host $host;
+{% endif %}
+    }
+
+    location ^~ /s2-img/user/ {
+{% if data['node'] == "2" %}
+        alias /data{{ data['node'] }}/cyqz/media/user/;
+
+        set $width 150;
+        set $height 100;
+
+        if ( $request_uri ~* "^/s([0-9]{1,2})-img/(.*)$" ) {
+            set $pic_path $2;
+        }
+
+        if ($query_string ~* "^width=(\d+)&height=(\d+)$") {
+            set $width $1;
+            set $height $2;
+
+            set $image_uri image_resize/$pic_path;
+
+            proxy_pass https://192.168.2.224/$image_uri;
+            break;
+        }
+        proxy_set_header    Host $host;
+
+        proxy_cache cache_api;
+        proxy_cache_revalidate on;
+        proxy_cache_valid 200 301 302 304 3s;
+        proxy_cache_valid any 15s;
+        proxy_cache_key $host$uri$is_args$args;
+        add_header X-Proxy-Cache $upstream_cache_status;
+{% else %}
+        proxy_pass          https://192.168.2.224/s2-img/user/;
+        proxy_set_header    Host $host;
+{% endif %}
+    }
+
+    location ^~ /s1-img/target/ {
+{% if data['node'] == "1" %}
+        alias /data{{ data['node'] }}/cyqz/media/target/;
+
+        set $width 150;
+        set $height 100;
+
+        if ( $request_uri ~* "^/s([0-9]{1,2})-img/(.*)$" ) {
+            set $pic_path $2;
+        }
+
+        if ($query_string ~* "^width=(\d+)&height=(\d+)$") {
+            set $width $1;
+            set $height $2;
+
+            set $image_uri image_resize/$pic_path;
+
+            proxy_pass https://192.168.2.221/$image_uri;
+            break;
+        }
+        proxy_set_header    Host $host;
+
+        proxy_cache cache_api;
+        proxy_cache_revalidate on;
+        proxy_cache_valid 200 301 302 304 3s;
+        proxy_cache_valid any 15s;
+        proxy_cache_key $host$uri$is_args$args;
+        add_header X-Proxy-Cache $upstream_cache_status;
+{% else %}
+        proxy_pass          https://192.168.2.221/s1-img/target/;
+        proxy_set_header    Host $host;
+{% endif %}
+    }
+
+    location ^~ /s2-img/target/ {
+{% if data['node'] == "2" %}
+        alias /data{{ data['node'] }}/cyqz/media/target/;
+
+        set $width 150;
+        set $height 100;
+
+        if ( $request_uri ~* "^/s([0-9]{1,2})-img/(.*)$" ) {
+            set $pic_path $2;
+        }
+
+        if ($query_string ~* "^width=(\d+)&height=(\d+)$") {
+            set $width $1;
+            set $height $2;
+
+            set $image_uri image_resize/$pic_path;
+
+            proxy_pass https://192.168.2.224/$image_uri;
+            break;
+        }
+        proxy_set_header    Host $host;
+
+        proxy_cache cache_api;
+        proxy_cache_revalidate on;
+        proxy_cache_valid 200 301 302 304 3s;
+        proxy_cache_valid any 15s;
+        proxy_cache_key $host$uri$is_args$args;
+        add_header X-Proxy-Cache $upstream_cache_status;
+{% else %}
+        proxy_pass          https://192.168.2.224/s2-img/target/;
+        proxy_set_header    Host $host;
+{% endif %}
+    }
+
+    location ^~ /s1-img/ {
+{% if data['node'] == "1" %}
+        alias /data{{ data['node'] }}/cyqz/media/;
+{% else %}
+        proxy_pass          https://192.168.2.221/s1-img/;
+        proxy_set_header    Host $host;
+{% endif %}
+    }
+
+    location ^~ /s2-img/ {
+{% if data['node'] == "2" %}
+        alias /data{{ data['node'] }}/cyqz/media/;
+{% else %}
+        proxy_pass          https://192.168.2.224/s2-img/;
+        proxy_set_header    Host $host;
+{% endif %}
+    }
+
+    location ^~ /image_resize {
+        alias /data{{ data['node'] }}/cyqz/media/;
+        image_filter resize $arg_width $arg_height;
+        image_filter_jpeg_quality 75;
+        image_filter_buffer 12M;
+
+        access_log off;
+    }
+
+    location ^~ /bimg/ {
+        return 404;
+    }
+}

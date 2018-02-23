@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('cs:zone:goindexweb:config') -%}
+{{ data|yaml(False) }}

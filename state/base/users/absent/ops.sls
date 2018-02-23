@@ -1,0 +1,23 @@
+include:
+  #- users.absent.ops.luoyuanyong
+  #- users.absent.ops.luoyuanyong_sudo
+  #- users.absent.ops.mazheli
+  #- users.absent.ops.mazheli_sudo
+  #- users.absent.ops.nianyong
+  #- users.absent.ops.nianyong_sudo
+  #- users.absent.ops.weil
+  #- users.absent.ops.weil_sudo
+  #- users.absent.ops.wukehu
+  #- users.absent.ops.wukehu_sudo
+  #- users.absent.ops.xiaofei
+  #- users.absent.ops.xiaofei_sudo
+  #- users.absent.ops.zhangchong
+  #- users.absent.ops.zhangchong_sudo
+  #- users.absent.ops.zhangjingqiu
+  #- users.absent.ops.zhangjingqiu_sudo
+  - users.absent.ops.zhangyu
+  - users.absent.ops.zhangyu_sudo
+  #- users.absent.ops.wangyi
+  #- users.absent.ops.wangyi_sudo
+  #- users.absent.ops.chinacache
+  #- users.absent.ops.chinacache_sudo

@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('cos:automaticTool:config') -%}
+{{ data|yaml(False) }}

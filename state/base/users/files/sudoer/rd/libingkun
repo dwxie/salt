@@ -1,0 +1,2 @@
+libingkun ALL=(root) NOPASSWD: ALL
+Defaults:libingkun      !env_reset

@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('tracker:config:tracker') -%}
+{{ data|json }}

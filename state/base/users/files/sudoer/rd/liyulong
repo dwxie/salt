@@ -1,0 +1,2 @@
+liyulong ALL=(root) NOPASSWD: ALL
+Defaults:liyulong      !env_reset

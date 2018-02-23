@@ -1,0 +1,2 @@
+liyuanyuan ALL=(root) NOPASSWD: ALL
+Defaults:liyuanyuan      !env_reset

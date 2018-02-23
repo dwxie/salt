@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('keeper:config') -%}
+{{ data|yaml(False) }}

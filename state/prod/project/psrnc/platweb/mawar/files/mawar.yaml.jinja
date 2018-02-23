@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('platweb:mawar:mawar:config') -%}
+{{ data|yaml(False) }}

@@ -1,0 +1,10 @@
+/home/tangtao/tracker/log/*.log
+/opt/tracker/log/*.log {
+    daily
+    rotate 7
+    missingok
+    notifempty
+    delaycompress
+    compress
+    copytruncate
+}

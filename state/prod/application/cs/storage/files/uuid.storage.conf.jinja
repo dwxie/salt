@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <download_cache>{{ salt['pillar.get']('storage:download_cache') }}</download_cache>
+    <mem_cache>{{ salt['pillar.get']('storage:mem_cache') }}</mem_cache>
+    <partitions>
+        {% for partition in salt['pillar.get']('storage:partitions') -%}
+        {% set mount_index = partition['server_port'] - 9000 -%}
+        {% set query_port = partition['server_port'] - 1000 -%}
+        <partition>
+            <enable>{{ partition['enable'] }}</enable>
+            <automount>{{ partition['automount'] }}</automount>
+            <fs_type>{{ partition['fs_type'] }}</fs_type>
+            <index_backup_partition_name>/dev/disk/by-uuid/{{ partition['uuid_index_backup'] }}</index_backup_partition_name>
+            <index_backup_partition_mount>/disk/{{ mount_index }}/index_backup</index_backup_partition_mount>
+            <index_partition_name>/dev/disk/by-uuid/{{ partition['uuid_index'] }}</index_partition_name>
+            <index_partition_mount>/disk/{{ mount_index }}/index</index_partition_mount>
+            <data_partition_name>/dev/disk/by-uuid/{{ partition['uuid_data'] }}</data_partition_name>
+            <data_partition_mount>/disk/{{ mount_index }}/data</data_partition_mount>
+            <public_ip>{{ salt['pillar.get']('storage:public_ip') }}</public_ip>
+            <local_ip>{{ salt['pillar.get']('storage:local_ip') }}</local_ip>
+            <server_port>{{ partition['server_port'] }}</server_port>
+            <query_port>{{ query_port }}</query_port>
+            <tracker_server_ip>{{ salt['pillar.get']('storage:tracker_server_ip') }}</tracker_server_ip>
+            <tracker_server_port>{{ salt['pillar.get']('storage:tracker_server_port') }}</tracker_server_port>
+            <rabbitmq_cluster>
+                {% for node in pillar['storage']['rabbitmq_cluster'] -%}
+                <node>
+                    <enable>{{ node['enable'] }}</enable>
+                    <ip>{{ node['ip'] }}</ip>
+                    <port>{{ node['port'] }}</port>
+                    <username>{{ node['username'] }}</username>
+                    <password>{{ node['password'] }}</password>
+                </node>
+            {% endfor -%}
+            </rabbitmq_cluster>
+        </partition>
+        {% endfor -%}
+    </partitions>
+</config>

@@ -1,0 +1,35 @@
+{% set data = salt['pillar.get']('cos:CODisktracker:config') -%}
+[SERVICE]
+port={{ data['SERVICE']['port'] }}
+
+[MONGOHOST]
+host={{ data['MONGOHOST']['host'] }}
+
+[AREA]
+; 区域ID 1:佛山 3:台州 4:石家庄 5:长沙
+id={{ data['AREA']['id'] }}
+name={{ data['AREA']['name'] }}
+did_begin={{ data['AREA']['did_begin'] }}
+did_end={{ data['AREA']['did_end'] }}
+
+[GROUP]
+groupby={{ data['GROUP']['groupby'] }}
+cycletypes={{ data['GROUP']['cycletypes']|length }}
+{% for cycletype in data['GROUP']['cycletypes'] %}
+cycletype{{ loop.index }}={{ cycletype['cycletype'] }}
+{% endfor %}
+{% for groupcount in data['GROUP']['cycletypes'] %}
+groupcount{{ loop.index }}={{ groupcount['groupcount'] }}
+{% endfor %}
+
+[DISK]
+timeout_offline={{ data['DISK']['timeout_offline'] }}
+timeout_exchange={{ data['DISK']['timeout_exchange'] }}
+reserve_min={{ data['DISK']['reserve_min'] }}
+onlines_min={{ data['DISK']['onlines_min'] }}
+timeout_env_stable={{ data['DISK']['timeout_env_stable'] }}
+
+[PERSIST]
+days_gload={{ data['PERSIST']['days_gload'] }}
+days_group={{ data['PERSIST']['days_group'] }}
+days_discstate={{ data['PERSIST']['days_discstate'] }}

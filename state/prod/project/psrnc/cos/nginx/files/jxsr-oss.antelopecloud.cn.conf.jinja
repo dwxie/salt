@@ -1,0 +1,133 @@
+{% set data = salt['pillar.get']('cos:nginx:vhosts:' + vhost) -%}
+proxy_cache_path proxy_cache_api levels=1:2 keys_zone=cache_api:100m inactive=1d max_size=2g;
+proxy_cache_path proxy_cache_snapshot levels=1:2 keys_zone=cache_snapshot:100m inactive=1d max_size=2g;
+
+server {
+    listen 443 ssl;
+    server_name{% for server_name in data['server_names'] %} {{ server_name }}{% endfor %};
+
+    charset utf-8;
+    root html;
+    index index.html index.htm;
+
+    access_log logs/jxsr-oss.antelopecloud.cn.access.log antelope;
+    error_log logs/jxsr-oss.antelopecloud.cn.error.log;
+
+    client_body_buffer_size  16K;
+    client_header_buffer_size  1k;
+    client_max_body_size  300m;
+    large_client_header_buffers  4  16k;
+
+    ssl_certificate /opt/nginx/conf/star.antelopecloud.cn.crt;
+    ssl_certificate_key /opt/nginx/conf/star.antelopecloud.cn.key;
+    ssl_prefer_server_ciphers on;
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA:ECDHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA256:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:ECDHE-RSA-DES-CBC3-SHA:EDH-RSA-DES-CBC3-SHA:AES256-GCM-SHA384:AES128-GCM-SHA256:AES256-SHA256:AES128-SHA256:AES256-SHA:AES128-SHA:DES-CBC3-SHA:HIGH:!aNULL:!eNULL:!EXPORT:!DES:!MD5:!PSK:!RC4";
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 10m;
+    add_header Strict-Transport-Security max-age=63072000;
+    add_header X-Content-Type-Options nosniff;
+
+    add_header Access-Control-Allow-Origin *;
+    add_header Access-Control-Allow-Headers X-Requested-With;
+    add_header Access-Control-Allow-Methods GET,POST,OPTIONS;
+
+    location ^~ / {
+        set $check_token "on";
+        if ($args ~ "access_token\=([0-9]*)_([0-9]*)_([0-9]*)_(.{32})") {
+            set $cid $1;
+            set $access $2;
+            set $expire $3;
+            set $token $4;
+        }
+
+        if ($query_string ~* "width=(\d+)&height=(\d+)") {
+            set $image_uri image_cache$request_uri;
+
+            proxy_pass https://frontend_oss/$image_uri;
+        }
+
+        proxy_pass          http://backend_oss;
+        proxy_set_header    Host $host;
+    }
+
+    location ^~ /v2/events {
+        proxy_pass          http://backend_pigeon;
+        proxy_set_header    Host $host;
+        proxy_redirect      off;
+        proxy_set_header    X-Real-IP $remote_addr;
+        proxy_set_header    REMOTE-HOST $remote_addr;
+        proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout   3600;
+        proxy_read_timeout      3600;
+        proxy_send_timeout      3600;
+    }
+
+    location ^~ /image_cache/ {
+        set $check_token "on";
+        if ($args ~ "access_token\=([0-9]*)_([0-9]*)_([0-9]*)_(.{32})") {
+            set $cid $1;
+            set $access $2;
+            set $expire $3;
+            set $token $4;
+        }
+        rewrite ^/image_cache/(.*)$ /image_resize/$1 break;
+        proxy_pass          https://frontend_oss;
+        proxy_set_header    Host $host;
+
+        proxy_cache cache_api;
+        proxy_cache_revalidate on;
+        proxy_cache_valid 200 301 302 304 1d;
+        proxy_cache_valid any 15s;
+        proxy_cache_key $host$uri$is_args$args;
+        add_header X-Proxy-Cache $upstream_cache_status;
+    }
+
+    location ^~ /snapshots/images {
+        set $check_token "on";
+        if ($args ~ "access_token\=([0-9]*)_([0-9]*)_([0-9]*)_(.{32})") {
+            set $cid $1;
+            set $access $2;
+            set $expire $3;
+            set $token $4;
+        }
+        proxy_pass  http://backend_oss;
+        proxy_set_header Host $host;
+
+        proxy_cache cache_snapshot;
+        proxy_cache_revalidate on;
+        proxy_cache_valid 200 301 302 304 1d;
+        proxy_cache_valid any 15s;
+        proxy_cache_key $host$uri$is_args$args;
+        add_header X-Proxy-Cache $upstream_cache_status;
+    }
+
+    location ^~ /image_resize {
+        set $check_token "on";
+        if ($args ~ "access_token\=([0-9]*)_([0-9]*)_([0-9]*)_(.{32})") {
+            set $cid $1;
+            set $access $2;
+            set $expire $3;
+            set $token $4;
+        }
+        rewrite ^/image_resize/(.*)$ /$1 break;
+        proxy_pass          http://backend_oss;
+
+        image_filter resize $arg_width $arg_height;
+        image_filter_jpeg_quality 75;
+        image_filter_buffer 12M;
+
+        #access_log off;
+    }
+
+    location ^~ /zabbix_api {
+        alias html;
+
+        access_log off;
+    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   html;
+    }
+}

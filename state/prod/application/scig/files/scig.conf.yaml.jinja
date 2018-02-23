@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('scig:config') -%}
+{{ data|yaml(False) }}

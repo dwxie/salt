@@ -1,0 +1,2 @@
+zhangchong ALL=(root) NOPASSWD: ALL
+Defaults:zhangchong      !env_reset

@@ -1,0 +1,9 @@
+{% set data = salt['pillar.get']('apache:zookeeper:config:zoo') -%}
+tickTime={{ data['tickTime'] }}
+dataDir={{ data['dataDir'] }}
+clientPort={{ data['clientPort'] }}
+initLimit={{ data['initLimit'] }}
+syncLimit={{ data['syncLimit'] }}
+{% for server in data['servers'] %}
+server.{{ loop.index }}={{ server['host'] }}:{{ server['rpc_port'] }}:{{ server['election_port'] }}
+{% endfor %}

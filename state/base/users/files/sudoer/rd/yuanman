@@ -1,0 +1,2 @@
+yuanman ALL=(root) NOPASSWD: ALL
+Defaults:yuanman      !env_reset

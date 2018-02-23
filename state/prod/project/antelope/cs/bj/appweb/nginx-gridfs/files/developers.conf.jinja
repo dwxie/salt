@@ -1,0 +1,42 @@
+server {
+    listen       8009;
+    server_name  localhost;
+
+    location / {
+        proxy_pass http://223.202.103.157;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /API/ {
+        proxy_pass http://223.202.103.157;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /v1/ {
+        proxy_pass http://223.202.103.157;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /static {
+        root /var/www/camera_app/camera_app/;
+    }
+
+    location /gridfs/ {
+        gridfs camera_app_file
+            field=_id
+            type=objectid;
+        mongo 127.0.0.1:27017;
+    }
+
+    error_page  404              /404.html;
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   html;
+    }
+}

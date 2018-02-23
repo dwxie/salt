@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('eye:eye:config') -%}
+{{ data|yaml(False) }}

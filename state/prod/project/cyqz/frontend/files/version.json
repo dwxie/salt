@@ -1,0 +1,16 @@
+{
+    "android": {
+        "version_name": "朝阳群众v2.0",
+        "version_number": 18,
+        "version_description": "1、界面风格更简洁;\n2、其它若干bug。",
+        "force_update": false,
+        "package_url": "https://case.netposa.com/static/bin/73E1DF12F36D3933E35C8EDC25A35F10.apk"
+    },
+    "ios": {
+        "version_name": "朝阳群众v2.0",
+        "version_number": 18,
+        "version_description": "1、界面风格更简洁;\n2、其它若干bug。",
+        "force_update": false,
+        "package_url": "https://www.pgyer.com/2XAo"
+    }
+}

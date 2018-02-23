@@ -1,0 +1,19 @@
+{% set data = salt['pillar.get']('zabbix') -%}
+PidFile={{ data['agentd']['PidFile'] }}
+LogFile={{ data['agentd']['LogFile'] }}
+LogFileSize={{ data['agentd']['LogFileSize'] }}
+DebugLevel={{ data['agentd']['DebugLevel'] }}
+EnableRemoteCommands={{ data['agentd']['EnableRemoteCommands'] }}
+
+Server={{ data['agentd']['Server'] }}
+ListenPort={{ data['agentd']['ListenPort'] }}
+StartAgents={{ data['agentd']['StartAgents'] }}
+
+AllowRoot={{ data['agentd']['AllowRoot'] }}
+User={{ data['agentd']['User'] }}
+
+ServerActive={{ data['agentd']['ServerActive'] }}
+HostnameItem={{ data['agentd']['HostnameItem'] }}
+
+Include={{ data['agentd']['Include'] }}
+Timeout=30

@@ -1,0 +1,2 @@
+tonychow ALL=(root) NOPASSWD: ALL
+Defaults:tonychow      !env_reset

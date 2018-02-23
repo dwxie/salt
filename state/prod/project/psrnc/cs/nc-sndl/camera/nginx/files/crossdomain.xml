@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">
+<cross-domain-policy>
+    <allow-access-from domain="*.topvdn.com" />
+    <allow-access-from domain="*.antelopecloud.cn" />
+    <allow-access-from domain="*.lingdanet.com" />
+    <allow-access-from domain="*.netposa.com" />
+    <allow-access-from domain="*.iermu.com" />
+    <allow-access-from domain="*.ucastcn.com" />
+    <allow-http-request-headers-from domain="*.topvdn.com" headers="*" />
+    <allow-http-request-headers-from domain="*.antelopecloud.cn" headers="*" />
+    <allow-http-request-headers-from domain="*.lingdanet.com" headers="*" />
+    <allow-http-request-headers-from domain="*.netposa.com" headers="*" />
+    <allow-http-request-headers-from domain="*.iermu.com" headers="*" />
+    <allow-http-request-headers-from domain="*.ucastcn.com" headers="*" />
+</cross-domain-policy>

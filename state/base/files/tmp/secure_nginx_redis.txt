@@ -1,0 +1,63 @@
+nginx
+1、禁用autoindex
+2、关闭服务器标记
+    server_tokens off;
+3、自定义缓存
+    server block
+        client_body_buffer_size  16K;
+        client_header_buffer_size  1k;
+        client_max_body_size  10m;
+        large_client_header_buffers  4  8k;
+4、设置timeout设置timeout设低来防御DOS攻击
+    http block
+        client_body_timeout   10;
+        client_header_timeout  30;
+        keepalive_timeout     30  30;
+        send_timeout          10;
+5、限制访问的方法
+    server block
+        if($request_method !~ ^(GET|HEAD|POST)$) {
+            return404;
+        }
+6、限制访问IP
+    location block
+        allow x.x.x.x/24;
+        allow x.x.x.x/24;
+        deny all;
+
+7、日志切割
+    后续添加
+8、error_page 401 403 404 /404.html;
+    添加多一个server vhost
+        server {
+            listen       80;
+            server_name  _;
+            root   html;
+            index  index.html index.htm;
+
+            #error_page  404              /404.html;
+            error_page   500 502 503 504  /50x.html;
+            location = /50x.html {
+                root   html;
+            }
+        }
+9、安装 nginx-naxsi
+    sudo apt-get update
+    sudo apt-get install nginx-naxsi
+10、check nginx module
+
+
+redis
+1、配置访问密码
+    已配置
+2、重命名危险命令
+    加入到配置文件中
+        rename-command CONFIG b8h8fc02d524045429941cc15f59e41cb7bedddd
+        rename-command FLUSHDB ""
+        rename-command FLUSHALL ""
+        rename-command DEBUG ""
+        rename-command SHUTDOWN SHUTDOWN_MENOT
+3、bind 到内网IP
+4、不用root运行
+    以nobody运行
+5、该端口到8389

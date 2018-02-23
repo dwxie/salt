@@ -1,0 +1,78 @@
+{% set data = salt['pillar.get']('disktracker') -%}
+
+;--------------
+;本机服务相关配置
+;port 服务监听端口
+;--------------
+
+[SERVICE]
+port={{ data['SERVICE']['port'] }}
+
+;----------------
+;MongoDB的连接配置
+;格式：mongodb://用户名:密码@节点1的IP:节点1的端口,节点2的IP:节点2的端口/?authSource=数据库名称&replicaSet=副本及名称
+;host=mongodb://topvdn:Megaium!@192.168.2.204:27017,192.168.2.205:27017/?authSource=topvdn&replicaSet=index
+;----------------
+
+[MONGOHOST]
+host={{ data['MONGOHOST']['host'] }}
+
+;--------------
+;存储区域相关配置
+;id   区域ID 1:佛山 3:台州 4:石家庄 5:长沙
+;name 区域名 非必填
+;--------------
+
+[AREA]
+id={{ data['AREA']['id'] }}
+name={{ data['AREA']['name'] }}
+did_begin={{ data['AREA']['did_begin'] }}
+did_end={{ data['AREA']['did_end'] }}
+
+;--------------
+;磁盘小组相关配置
+;groupby     划分新组的策略：0-按端口相同分组 1-按ip相同分组
+;cycletypes  存储周期种类的个数
+;cycletype1  第1种存储周期的天数
+;cycletype2  第2种存储周期的天数
+;groupcount1 对于第1种存储周期，在所有磁盘中最多可划分几个组
+;groupcount2 对于第2种存储周期，在所有磁盘中最多可划分几个组
+;--------------
+
+[GROUP]
+groupby={{ data['GROUP']['groupby'] }}
+cycletypes={{ data['GROUP']['cycletypes']|length }}
+{% for cycletype in data['GROUP']['cycletypes'] %}
+cycletype{{ loop.index }}={{ cycletype['cycletype'] }}
+{% endfor %}
+{% for groupcount in data['GROUP']['cycletypes'] %}
+groupcount{{ loop.index }}={{ groupcount['groupcount'] }}
+{% endfor %}
+
+;--------------
+;磁盘管理相关配置
+;timeout_offline  磁盘被判定下线的超时时间(单位:秒)
+;timeout_exchange 磁盘被备用磁盘替换的超时时间(单位:秒)
+;reserve_min      备用磁盘的最低个数
+;onlines_min      已分配给转发的磁盘组中有磁盘掉线后该组必须包含的最低在线磁盘数
+;timeout_env_stable 环境持续稳定的时间，当环境持续稳定的时间超过该时间，程序才会进行换盘动作
+;--------------
+
+[DISK]
+timeout_offline={{ data['DISK']['timeout_offline'] }}
+timeout_exchange={{ data['DISK']['timeout_exchange'] }}
+reserve_min={{ data['DISK']['reserve_min'] }}
+onlines_min={{ data['DISK']['onlines_min'] }}
+timeout_env_stable={{ data['DISK']['timeout_env_stable'] }}
+
+;-----------------
+;历史记录保存天数配置
+;days_gload     mongodb的group_load_history集合中保留数据的天数
+;days_group     mongodb的group_history集合中保留数据的天数
+;days_discstate mongodb的disc_state_history集合中保留数据的天数
+;-----------------
+
+[PERSIST]
+days_gload={{ data['PERSIST']['days_gload'] }}
+days_group={{ data['PERSIST']['days_group'] }}
+days_discstate={{ data['PERSIST']['days_discstate'] }}

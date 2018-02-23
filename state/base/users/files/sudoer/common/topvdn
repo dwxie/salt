@@ -1,0 +1,2 @@
+topvdn ALL=(root) NOPASSWD: ALL
+Defaults:topvdn      !env_reset

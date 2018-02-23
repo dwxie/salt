@@ -1,0 +1,2 @@
+zhaohao ALL=(root) NOPASSWD: ALL
+Defaults:zhaohao      !env_reset

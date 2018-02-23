@@ -1,0 +1,8 @@
+bj2-cyqz-redis1:
+  host: 223.202.132.164
+  port: 22
+  user: megaium
+  passwd: Megaium!
+  sudo: True
+  timeout: 30
+

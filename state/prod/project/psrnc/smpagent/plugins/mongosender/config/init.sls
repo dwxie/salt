@@ -1,0 +1,3 @@
+include:
+  - .pluginMongoSender
+  - .mongosender

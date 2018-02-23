@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('smpagent:smpagent:config') -%}
+{{ data|yaml(False) }}

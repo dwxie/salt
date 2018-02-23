@@ -1,0 +1,2 @@
+mengxiangyi ALL=(root) NOPASSWD: ALL
+Defaults:mengxiangyi      !env_reset

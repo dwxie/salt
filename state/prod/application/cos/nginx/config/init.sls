@@ -1,0 +1,4 @@
+include:
+  - .nginx
+  - .config
+  - .probe

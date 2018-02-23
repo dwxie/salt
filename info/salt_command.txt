@@ -1,0 +1,42 @@
+1、拿到IP
+    salt "A" grains.item ipv4
+    salt "A" grains.item ip4_interfaces
+    salt "A" grains.item ip_interfaces
+2、获取系统信息
+    salt "A" grains.item os
+    salt "A" grains.item osfullname
+    salt "A" grains.item osrelease
+    salt "A" grains.item host
+    salt "A" grains.item kernelrelease
+    salt "A" grains.item osarch
+3、
+
+================================
+可以拿到所有的pillar信息
+salt "A" pillar.items
+salt "A" pillar.item item:to:some:key
+salt "A" pillar.item item:to:some:key1 item:to:some:key2
+
+可以拿到所有的grains信息
+salt "B" grains.items
+salt "B" grains.item item:to:some:key
+salt "A" grains.item item:to:some:key1 item:to:some:key2
+
+==========================================
+1、通过pillar匹配然后进行处理
+    salt -C "J@relay:role:(C0|D0)" test.ping
+    salt -C "I@relay:role:C0" test.ping
+    salt -C "not I@relay:role:A0" test.ping
+    salt -C "G@os:Ubuntu and I@relay:role:C0 or J@relay:role:A0" test.ping
+
+2、告警匹配模式
+    salt -C "fs-web1" grains.item lsb_distrib_description kernelrelease sanitize=True
+    salt -C "E@.*sto.* and J@relay:config not E@fs-sto18" test.ping
+    salt -C "G@os:Ubuntu and I@relay:role:C0 or J@relay:role:B0 or E@.*appweb.*" test.ping
+    salt -C "G@os:Ubuntu and I@relay:role:C0 or J@relay:role:B0 or L@bj-appweb4,bj-appweb5" test.ping
+
+more info here: https://docs.saltstack.com/en/latest/topics/targeting/compound.html
+
+=====================================
+1、刷新pillar
+    salt '*' saltutil.refresh_pillar

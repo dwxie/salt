@@ -1,0 +1,2 @@
+zhengling ALL=(root) NOPASSWD: ALL
+Defaults:zhengling      !env_reset

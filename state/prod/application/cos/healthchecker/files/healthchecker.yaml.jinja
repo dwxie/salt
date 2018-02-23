@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('cos:healthchecker:config') -%}
+{{ data|yaml(False) }}

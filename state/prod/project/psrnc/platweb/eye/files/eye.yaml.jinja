@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('platweb:eye:eye:config') -%}
+{{ data|yaml(False) }}

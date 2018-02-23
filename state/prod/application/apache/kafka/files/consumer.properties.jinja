@@ -1,0 +1,5 @@
+{% set data = salt['pillar.get']('apache:kafka:config:consumer') -%}
+zookeeper.connect = {{ data['zookeeper']['connect']|join(',') }}
+zookeeper.connection.timeout.ms = {{ data['zookeeper']['connection']['timeout']['ms'] }}
+group.id=test-consumer-group
+consumer.timeout.ms = {{ data['consumer']['timeout']['ms'] }}

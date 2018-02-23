@@ -1,0 +1,87 @@
+# mysql config file
+{% set data = salt['pillar.get']('mysql:config') -%}
+
+[client]
+port = {{ data['base']['port'] }}
+socket = {{ data['base']['socket'] }}
+
+[mysqld]
+bind-address = {{ data['base']['bind_ip'] }}
+port = {{ data['base']['port'] }}
+socket = {{ data['base']['socket'] }}
+pid-file = {{ data['base']['pid_file'] }}
+character-set-server = {{ data['base']['char_set'] }}
+basedir = {{ data['base']['basedir'] }}
+datadir = {{ data['base']['datadir'] }}
+
+lower_case_table_names = 1
+log_bin_trust_function_creators = 1
+innodb_file_per_table = 1
+
+max_connections = {{ data['base']['max_connection'] }}
+max_user_connections = {{ data['base']['max_user_connection'] }}
+max_connect_errors = {{ data['base']['max_connect_errors'] }}
+wait_timeout = {{ data['base']['wait_timeout'] }}
+interactive_timeout = {{ data['base']['interactive_timeout'] }}
+table_open_cache = {{ data['base']['table_open_cache'] }}
+max_allowed_packet = {{ data['base']['max_allowed_packet'] }}
+sort_buffer_size = {{ data['base']['sort_buffer_size'] }}
+join_buffer_size = {{ data['base']['join_buffer_size'] }}
+thread_cache_size = {{ data['base']['thread_cache_size'] }}
+thread_concurrency = {{ data['base']['thread_concurrency'] }}
+query_cache_size = {{ data['base']['query_cache_size'] }}
+default-storage-engine = {{ data['base']['default_storage_engine'] }}
+server-id = {{ data['base']['server_id'] }}
+read_buffer = {{ data['base']['read_buffer'] }}
+
+skip-name-resolve
+skip-external-locking
+log-short-format
+skip-slave-start
+slow_query_log
+read_only
+
+log-error = {{ data['base']['log_error_pos'] }}
+long_query_time = {{ data['base']['long_query_time'] }}
+slow_query_log_file = {{ data['base']['slow_query_log_file'] }}
+
+log-bin = {{ data['base']['binlog_pos'] }}
+binlog_format = {{ data['base']['binlog_format'] }}
+expire_logs_days = {{ data['base']['expire_logs_days'] }}
+binlog-ignore-db = {{ data['base']['binlog_ignore_db'] }}
+sync_binlog = {{ data['base']['sync_binlog'] }}
+relay_log_info_file =  {{ data['base']['relay_log_info_file'] }}
+relay_log_index = {{ data['base']['relay_log_index'] }}
+relay_log = {{ data['base']['relay_log'] }}
+replicate_ignore_db = {{ data['base']['replication_ignore_db'] }}
+replicate_wild_ignore_table = {{ data['base']['replication_wild_ignore_table'] }}
+
+# INNODB Specific options
+innodb_data_home_dir = {{ data['base']['datadir'] }}
+innodb_log_group_home_dir = {{ data['innodb']['redodir'] }}
+innodb_additional_mem_pool_size = {{ data['innodb']['innodb_additional_mem_pool_size'] }}
+innodb_buffer_pool_size = {{ data['innodb']['innodb_buffer_pool_size'] }}
+innodb_data_file_path = {{ data['innodb']['innodb_data_file_path'] }}
+innodb_file_io_threads = {{ data['innodb']['innodb_file_io_threads'] }}
+innodb_thread_concurrency = {{ data['innodb']['innodb_thread_concurrency'] }}
+innodb_flush_log_at_trx_commit = {{ data['innodb']['innodb_flush_log_at_trx_commit'] }}
+innodb_flush_method = {{ data['innodb']['innodb_flush_method'] }}
+innodb_log_buffer_size = {{ data['innodb']['innodb_log_buffer_size'] }}
+innodb_log_file_size = {{ data['innodb']['innodb_log_file_size'] }}
+innodb_log_files_in_group = {{ data['innodb']['innodb_log_files_in_group'] }}
+innodb_max_dirty_pages_pct = {{ data['innodb']['innodb_max_dirty_pages_pct'] }}
+innodb_lock_wait_timeout = {{ data['innodb']['innodb_lock_wait_timeout'] }}
+
+# MyISAM Specific options
+key_buffer_size = {{ data['myisam']['key_buffer_size'] }}
+read_buffer_size = {{ data['myisam']['read_buffer_size'] }}
+read_rnd_buffer_size = {{ data['myisam']['read_rnd_buffer_size'] }}
+myisam_sort_buffer_size = {{ data['myisam']['myisam_sort_buffer_size'] }}
+myisam_max_sort_file_size = {{ data['myisam']['myisam_max_sort_file_size'] }}
+myisam_repair_threads = {{ data['myisam']['myisam_repair_threads'] }}
+myisam_recover_options = {{ data['myisam']['recover_options'] }}
+
+[mysql]
+default-character-set = {{ data['base']['char_set'] }}
+socket = {{ data['base']['socket'] }}
+

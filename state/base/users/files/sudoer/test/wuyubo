@@ -1,0 +1,2 @@
+wuyubo ALL=(root) NOPASSWD: ALL
+Defaults:wuyubo      !env_reset

@@ -1,0 +1,409 @@
+{% set data = salt['pillar.get']('elastic:logstash:config:ly_log') -%}
+input {
+    beats {
+        port => {{ data['input']['beats']['port'] }}
+    }
+}
+
+filter {
+    if [type] in ['tracker_business','tracker_statistic'] {
+        grok {
+           match => { "message" => "\[(?<datetime>.+?)\]\s\[(?<log_level>.*)\]\s\[(?<notify>.+?)\s(?<all>.*)\]"}
+        }
+        if [notify] in ["processConnectPeer","processCameraRequestRelay","threadReportPeerStatus"] {
+            grok {
+                match => { "all" => "(?<result>\w+)\s(?<details>.*)"}
+            }
+            ruby {
+                code => "event.append(Hash[event['details'].split(', ').map{|l| l.split(':')}])"
+            }
+        }
+        if [notify] in ["GlobalInfo","peerHeartbeat","updateRelayInfo","@relayInfo","processDetectTracker","processQueryCamera","processLogout","selectRtmpRelay","selectUdpRelay","CNotifyCenter::addMessage","CNotifyCenter::handleMsg_success","CNotifyCenter::handleMsg_failed","CNotifyCenter::handleMsg_once_success"] {
+            ruby {
+                code => "event.append(Hash[event['all'].split(', ').map{|l| l.split(':')}])"
+            }
+        }
+        if [notify] == "processInternalOutputStatistic" {
+            grok {
+                match => { "all" => "(?<statis_type>.+?):(?<details>.*)" }
+            }
+            if [statis_type] in ["total","period"] {
+                ruby {
+                    init => "@kname = ['STA_INDEX_DETECT','STA_INDEX_CAMERA_HEARTBEAT','STA_INDEX_MOBILE_HEARTBRAT','STA_INDEX_RELAY_HEARTBEAT','STA_INDEX_LOGOUT','STA_INDEX_QUERY_CAMERA','STA_INDEX_CONNECT_PEER_OLD','STA_INDEX_NOTIFY_MESSAGE','STA_INDEX_CONNECT_CLOUD','STA_INDEX_PEER_HEARTBEAT','STA_INDEX_QUERY_PEER_INFO','STA_INDEX_CONNECT_PEER']"
+                    code => "event.append(Hash[@kname.zip(event['details'].split(','))])"
+                }
+            }
+            if [statis_type] in ["ip_count","error_count"] {
+                mutate {
+                    rename => ["details","info"]
+                }
+            }
+        }
+        date {
+            match => ["datetime","YYYY-MM-dd'T'HH:mm:ss:SSS"]
+            target => "log_time"
+            timezone => "Asia/Chongqing"
+        }
+        mutate {
+            remove_field => ["all","details","message"]
+            convert => [
+                "ability","integer",
+                "peerid","integer",
+                "wanted","integer",
+                "selected","integer",
+                "ctag","integer",
+                "mtag","integer",
+                "status","string",
+                "msg_len","integer",
+                "peer_count","integer",
+                "relay","string",
+                "relay_count","integer",
+                "urate","integer",
+                "drate","integer",
+                "rpc","integer",
+                "spc","integer",
+                "rq","integer",
+                "sq","integer",
+                "rtag","integer",
+                "connval","integer"
+            ]
+        }
+    }
+
+    if [type] == 'icmp_log' {
+        grok {
+            match => { "message" => "\[(?<datetime>.+?),\s(?<src_ip>.+?)\s(?<des_ip>.+?),\s(?<lost256>.+?)%\s(?<time256>.+?)ms\s(?<min256>.+?)/(?<avg256>.+?)/(?<max256>.+?)/(?<mdev256>.+?),\s(?<lost512>.+?)%\s(?<time512>.+?)ms\s(?<min512>.+?)/(?<avg512>.+?)/(?<max512>.+?)/(?<mdev512>.+?),\s(?<lost1024>.+?)%\s(?<time1024>.+?)ms\s(?<min1024>.+?)/(?<avg1024>.+?)/(?<max1024>.+?)/(?<mdev1024>.+?)\]"}
+        }
+        mutate {
+            remove_field => ["message"]
+            convert => [
+                "lost256","integer",
+                "time256","integer",
+                "min256","float",
+                "avg256","float",
+                "max256","float",
+                "mdev256","float",
+                "lost512","integer",
+                "time512","integer",
+                "min512","float",
+                "avg512","float",
+                "max512","float",
+                "mdev512","float",
+                "lost1024","integer",
+                "time1024","integer",
+                "min1024","float",
+                "avg1024","float",
+                "max1024","float",
+                "mdev1024","float"
+            ]
+        }
+    }
+
+    if [type] == 'disktracker' {
+        grok {
+            match => {"message" => "\[(?<datetime>.+?)\]\s\[(?<log_info>.+?)\]\s\[(?<notify>.+?);(?<all>.*)\.\]"}
+        }
+        ruby {
+            code => "event.append(Hash[event['all'].split(', ').map{|l| l.split(': ')}])"
+        }
+        mutate {
+            remove_field => ["message","all","log_info"]
+            convert => [
+                "timestamp","integer"
+            ]
+        }
+    }
+
+    if [type] == 'http_access_log' {
+        grok {
+            #match => {"message" => "%{IP:server_ip} %{INT:port:int} %{DATA} %{DATA} %{DATA} %{DATA} %{INT:timestamp:int} \"%{WORD:http_method} /%{WORD:applicationid}/%{INT:cid:int}/%{DATA:request_obj} %{DATA}\" %{INT:status_code:int} %{INT:flow:int} \"%{DATA}\""}
+            match => {"message" => "%{IP:server_ip} %{INT:port:int} %{DATA} %{DATA} %{DATA} %{DATA} %{INT:timestamp:int} \"%{WORD:http_method}\s(?<request>.*) (?<protocol>.*)\"\s%{INT:status_code:int} %{INT:flow:int} \"%{DATA}\"\s(?<request_time>[0-9.-]{1,})\s(?<response_time>[0-9.-]{1,})"}
+        }
+        if [request] =~ /^\/hls\/.*/ {
+            grok {
+                match => {"request" => "^/hls/%{INT:cid:int}(?<hls_tail>.*)"}
+            }
+        }
+        if [request] =~ /^\/live\/.*/ {
+            grok {
+                match => {"request" => "^/live/%{INT:cid:int}(?<live_tail>.*)"}
+            }
+        }
+        mutate {
+            remove_field => ["message","hls_tail","live_tail"]
+        }
+    }
+
+    if [type] == 'rtmp_access_log' {
+        grok {
+            match => {"message" => '%{IP:server_ip} %{INT:port:int} %{INT:timestamp:int} %{WORD:publish} \"%{WORD:live}\" \"(?<cid>.*)\" \"%{WORD:appid}\" %{DATA} %{INT:down_flow:int} %{INT:up_flow:int} [\(\[]%{INT:con_time:int}(?<is_end>[\)\]])'}
+        }
+        if [is_end] == ']'{
+            mutate{
+                replace => {"is_end" => true}
+                convert => { "is_end" => "boolean" }
+            }
+        } else {
+            mutate{
+                replace => {"is_end" => false}
+                convert => { "is_end" => "boolean" }
+            }
+        }
+        mutate {
+            remove_field => ["message"]
+        }
+    }
+
+    if [type] == 'platweb_nginx' {
+        grok {
+            match => { "message" => "(?<server_ip>.+?) - (?<remote_user>.+?) \[(?<datetime>.+?)\]  \"(?<http_method>.+?) (?<request_url>.+?) (?<http_version>.+?)\" (?<status_code>\d+?) (?<body_bytes_sent>\d+?) \"(?<http_referer>.+?)\" \"(?<http_user_agent>.+?)\" (?<request_length>\d+?) (?<web_req_time>[0-9.-]{1,})\s(?<web_res_time>[0-9.-]{1,})" }
+        }
+        grok {
+            match => {"request_url" => "/(?<version>.+?)/(?<note>.+?)/(?<info>.+?)/(?<all>.*)"}
+        }
+        if [note] in ['cameras','record'] {
+            mutate {
+                rename => { "info" => "cid" }
+                rename => { "note" => "notify" }
+            }
+        }
+        if [request_url] =~ /\/v2\/devices\/state/ {
+            mutate {
+                add_field => { "url_type" => "query_stat" }
+            }
+        } else if [request_url] =~ /\/v2\/message\/client\/push/ {
+            mutate {
+                add_field => { "url_type" => "client_push" }
+            }
+        } else if [request_url] =~ /\/v2\/record\/\d+\/timeline/ {
+            mutate {
+                add_field => { "url_type" => "query_timeline" }
+            }
+        }
+        if '-' in [web_res_time]{
+            mutate {
+                remove_field => ["web_res_time"]
+            }
+        }
+       if '-' in [web_req_time]{
+            mutate {
+                remove_field => ["web_req_time"]
+            }
+        }
+        mutate {
+            remove_field => ["message","info","version","all","note","tag"]
+            convert => [
+                "web_res_time", "float",
+                "web_req_time", "float"
+            ]
+        }
+    }
+
+    if [type] == 'appweb_nginx' {
+        grok {
+            match => {"message" => "(?<server_ip>.*)\s-\s(?<remote_user>.*)\s\[(?<datetime>.*)\]\s\"(?<http_method>.*)\s(?<request>.*) (?<protocol>.*)\"\s(?<request_time>[0-9.-]{1,})\s(?<response_time>[0-9.-]{1,})\s(?<status_code>\d+)\s(?<body_bytes_sent>\d+)\s\"(?<http_referer>.*)\"\s\"(?<http_user_agent>.*)\"\s(?<http_x_forwarded_for>.*)"}
+        }
+        mutate {
+            remove_field => ["message"]
+        }
+    }
+
+    if [type] in ['platweb_log', 'index_web_log'] {
+        mutate {
+            rename => {"type" => "log_type"}
+        }
+        json {
+            source => "message"
+        }
+        mutate {
+            rename => { "type" => "notify" }
+            rename => { "log_type" => "type" }
+            remove_field => ["message"]
+        }
+    }
+
+    if [type] == 'index_web_nginx' {
+        grok {
+            match => {"message" => "(?<server_ip>.*)\s-\s(?<remote_user>.*)\s\[(?<datetime>.*)\]\s\"(?<http_method>.*)\s(?<request>.*) (?<protocol>.*)\"\s(?<request_time>[0-9.-]{1,})\s(?<response_time>[0-9.-]{1,})\s(?<status_code>\d+)\s(?<body_bytes_sent>\d+)\s\"(?<http_referer>.*)\"\s\"(?<http_user_agent>.*)\"\s(?<http_x_forwarded_for>.*)\s(?<request_length>.*)"}
+        }
+        mutate {
+            add_field => {
+                "web_req_time" => "%{request_time}"
+                "web_res_time" => "%{response_time}"
+            }
+        }
+        if '-' in [web_res_time] {
+            mutate {
+                remove_field => ["web_res_time"]
+            }
+        }
+        if '-' in [web_req_time] {
+            mutate {
+                remove_field => ["web_req_time"]
+            }
+        }
+        mutate {
+            remove_field => ["message"]
+            convert => [
+                "web_res_time", "float",
+                "web_req_time", "float",
+                "request","string",
+                "body_bytes_sent","integer",
+                "request_length","integer"
+            ]
+        }
+    }
+
+    if [type] == 'rtmp_bussiness' {
+        grok {
+            match => { "message" => "\[(?<datetime>.*)\]\s\[(?<notify>.+?);\s(?<all>.*)\]"}
+        }
+        ruby {
+            code => "event.append(Hash[event['all'].split(', ').map{|l| l.split(':')}])"
+        }
+        mutate {
+            remove_field => [ "all", "message" ]
+        }
+    }
+
+    if [type] == 'storage' {
+        grok {
+            match => { "message" => "\[DateTime:(?<datetime>.*),\sFile:(?<File>.+?),\sLine:(?<Line>.+?)\]\s\[(?<log_level>.*)\]\s\[(?<notify>.*)\]\s(?<all>.*)"}
+        }
+        ruby {
+            code => "event.append(Hash[event['all'].split(', ').map{|l| l.split(':')}])"
+        }
+        mutate {
+            remove_field => [ "all", "message" ]
+        }
+    }
+
+    if [type] == 'cyqz_nginx' {
+        grok {
+            match => {"message" => "(?<server_ip>.*)\s(?<remote_user>.*)\s\[(?<datetime>.*)\]\s\"(?<http_method>.*)\s(?<request>.*) (?<protocol>.*)\"\s(?<status_code>\d+)\s(?<request_time>[0-9.-]{1,})\s(?<response_time>[0-9.-]{1,})\s(?<body_bytes_sent>\d+)\s\"(?<http_referer>.*)\"\s\"(?<http_user_agent>.*)\"\s(?<http_x_forwarded_for>.*)\s(?<request_length>.*)"}
+        }
+        mutate {
+            add_field => {
+                "web_req_time" => "%{request_time}"
+                "web_res_time" => "%{response_time}"
+            }
+        }
+        if '-' in [web_res_time] {
+            mutate {
+                remove_field => ["web_res_time"]
+            }
+        }
+        if '-' in [web_req_time] {
+            mutate {
+                remove_field => ["web_req_time"]
+            }
+        }
+        if '-' in [request_time] {
+            mutate {
+                remove_field => ["web_res_time"]
+            }
+        }
+        if '-' in [response_time] {
+            mutate {
+                remove_field => ["web_req_time"]
+            }
+        }
+        mutate {
+            remove_field => ["message"]
+            convert => [
+                "request_time", "float",
+                "response_time", "float",
+                "status_code","integer",
+                "request","string",
+                "body_bytes_sent","integer",
+                "request_length","integer"
+            ]
+        }
+    }
+
+    if [type] in ['rtmp_record', 'billing'] {
+        json {
+            source => "message"
+        }
+        mutate {
+            remove_field => ["message"]
+        }
+    }
+
+    mutate {
+        convert => [
+            "timestamp","integer",
+            "cid","integer"
+        ]
+    }
+}
+
+output {
+    if [type] in ['storage', 'indexserver', 'disktracker'] {
+        elasticsearch {
+            hosts => ['192.168.2.27:9200', '192.168.2.30:9200']
+            index => "cycle-storage-%{+YYYY.MM.dd}"
+            codec => json
+            document_type => "%{type}"
+            flush_size => 2000
+            template_overwrite => true
+            manage_template => true
+            #workers => 50
+        }
+    } else if [type] in ['platweb_log', 'index_web_log'] {
+        elasticsearch {
+            hosts => ['192.168.2.27:9200', '192.168.2.30:9200']
+            index => "weblog-%{+YYYY.MM.dd}"
+            codec => json
+            document_type => "%{type}"
+            flush_size => 2000
+            template_overwrite => true
+            manage_template => true
+            #workers => 50
+        }
+    } else if [type] in ['tracker_business', 'tracker_statistic'] {
+        elasticsearch {
+            hosts => ['192.168.2.27:9200', '192.168.2.30:9200']
+            index => "tracker-%{+YYYY.MM.dd}"
+            codec => json
+            document_type => "%{type}"
+            flush_size => 2000
+            template_overwrite => true
+            manage_template => true
+            #workers => 50
+        }
+    } else if [type] in ['cyqz_nginx', 'cyqz_log'] {
+        elasticsearch {
+            hosts => ['192.168.2.27:9200', '192.168.2.30:9200']
+            index => "cyqz-%{+YYYY.MM.dd}"
+            codec => json
+            document_type => "%{type}"
+            flush_size => 2000
+            template_overwrite => true
+            manage_template => true
+            #workers => 50
+        }
+    } else if [type] in ['rtmp_record', 'billing'] {
+        elasticsearch {
+            hosts => ['192.168.2.27:9200', '192.168.2.30:9200']
+            index => "billing-rtmp-%{+YYYY.MM.dd}"
+            codec => json
+            document_type => "%{type}"
+            flush_size => 2000
+            template_overwrite => true
+            manage_template => true
+            #workers => 50
+        }
+    } else {
+        elasticsearch {
+            hosts => ['192.168.2.27:9200', '192.168.2.30:9200']
+            index => "ly-log-%{+YYYY.MM.dd}"
+            codec => json
+            document_type => "%{type}"
+            flush_size => 2000
+            template_overwrite => true
+            manage_template => true
+            #workers => 50
+        }
+    }
+}

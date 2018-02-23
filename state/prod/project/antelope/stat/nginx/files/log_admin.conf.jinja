@@ -1,0 +1,138 @@
+server {
+    listen 80;
+    server_name localhost;
+
+    root /var/www/log_admin;
+    index index.html index.htm;
+
+    access_log logs/log_admin.access.log antelope;
+    error_log logs/log_admin.error.log;
+
+    add_header Access-Control-Allow-Origin *;
+    #add_header Access-Control-Allow-Headers X-Requested-With;
+    #add_header Access-Control-Allow-Methods GET,POST,OPTIONS;
+    #add_header 'Access-Control-Allow-Credentials' 'true';
+
+    location /cameras/play_count {
+        proxy_pass http://monitor_server;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 3600;
+        proxy_read_timeout 3600;
+        proxy_send_timeout 3600;
+    }
+
+    location /cmdb {
+        proxy_pass  http://ly_cmdb/;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 3600;
+        proxy_read_timeout 3600;
+        proxy_send_timeout 3600;
+    }
+
+    location /api/querylog {
+        rewrite ^/api/(.*) /$1 break;
+        proxy_pass http://monitor_server;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 3600;
+        proxy_read_timeout 3600;
+        proxy_send_timeout 3600;
+    }
+
+    location /v1 {
+        proxy_pass http://center_log;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 3600;
+        proxy_read_timeout 3600;
+        proxy_send_timeout 3600;
+    }
+
+    location /cyqz {
+        proxy_pass http://center_log;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 3600;
+        proxy_read_timeout 3600;
+        proxy_send_timeout 3600;
+    }
+
+    location /cameras/play_count_all {
+        proxy_pass http://monitor_server;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 3600;
+        proxy_read_timeout 3600;
+        proxy_send_timeout 3600;
+    }
+
+    location /api/get_diagram_data {
+        rewrite ^/api/get_diagram_data/(.*) /diagram/$1 break;
+        proxy_pass http://monitor_server;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 3600;
+        proxy_read_timeout 3600;
+        proxy_send_timeout 3600;
+    }
+
+    location /api/cameras {
+        rewrite ^/api/cameras/(.*) /diagram/$1 break;
+        proxy_pass http://monitor_server;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 3600;
+        proxy_read_timeout 3600;
+        proxy_send_timeout 3600;
+    }
+
+    location / {
+        if (!-f $request_filename) {
+                rewrite . /index.html last;
+        }
+
+        auth_basic "lingyang_log";
+        auth_basic_user_file /var/www/log_admin/conf/htpasswd;
+        autoindex on;
+        try_files $uri $uri/ =404;
+    }
+
+}
+
+server {
+    listen 8066;
+    server_name localhost;
+
+    add_header 'Access-Control-Allow-Origin' "$http_origin";
+    add_header 'Access-Control-Allow-Credentials' 'true';
+    add_header 'Access-Control-Max-Age' 1728000;
+
+    location / {
+        proxy_pass http://monitor_server;
+        proxy_set_header Host $host;
+        proxy_redirect off;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 3600;
+        proxy_read_timeout 3600;
+        proxy_send_timeout 3600;
+    }
+}

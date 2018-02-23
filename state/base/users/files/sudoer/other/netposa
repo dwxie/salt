@@ -1,0 +1,2 @@
+netposa ALL=(root) NOPASSWD: ALL
+Defaults:netposa      !env_reset

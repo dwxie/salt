@@ -1,0 +1,64 @@
+# configuration File for keepalived
+{% set data = salt["pillar.get"]("lvs:keepalived") %}
+
+global_defs {
+   router_id LVS_1
+}
+
+vrrp_instance VI_1 {
+    state EQUAL
+    interface bond0
+    virtual_router_id 51
+    priority 100
+    advert_int 1
+
+    authentication {
+        auth_type PASS
+        auth_pass 1234
+    }
+
+    virtual_ipaddress {
+{% for vhost in data %}
+    {{ vhost['vip'] }}
+{% endfor %}
+    }
+}
+
+{% for vhost in data %}
+virtual_server {{ vhost['vip'] }} {{ vhost['vport'] }} {
+    delay_loop 30
+    lb_algo wlc
+    lb_kind DR
+    protocol TCP
+
+    real_server {{ vhost['rip1'] }} {{ vhost['rport1'] }} {
+        weight 1
+        TCP_CHECK {
+        connect_timeout 3
+        nb_get_retry 2
+        delay_before_retry 2
+        connect_port 80
+        }
+    }
+
+    real_server {{ vhost['rip2'] }} {{ vhost['rport2'] }} {
+        weight 1
+        TCP_CHECK {
+        connect_timeout 3
+        nb_get_retry 2
+        delay_before_retry 2
+        connect_port 80
+        }
+    }
+
+    real_server {{ vhost['rip3'] }} {{ vhost['rport3'] }} {
+        weight 1
+        TCP_CHECK {
+        connect_timeout 3
+        nb_get_retry 2
+        delay_before_retry 2
+        connect_port 80
+        }
+     }
+}
+{% endfor %}

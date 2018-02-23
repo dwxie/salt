@@ -1,0 +1,2 @@
+operator3 ALL=(root) NOPASSWD: /usr/bin/less,/sbin/ethtool,/usr/bin/tail,/usr/bin/strace,/usr/sbin/tcpdump,/bin/view,/bin/netstat,/usr/sbin/iftop,/usr/sbin/iotop,/usr/sbin/dmidecode
+Defaults:operator3      !env_reset

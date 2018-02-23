@@ -1,0 +1,4 @@
+include:
+  - .codisktracker
+  - .diskconfig
+  - .diskgroup

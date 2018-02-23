@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('gb:sipserver:config') -%}
+{{ data|json }}

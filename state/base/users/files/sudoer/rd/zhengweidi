@@ -1,0 +1,2 @@
+zhengweidi ALL=(root) NOPASSWD: ALL
+Defaults:zhengweidi      !env_reset

@@ -1,0 +1,31 @@
+#kafka pillar
+kafka:
+  config:
+    broker:
+      network_threads:
+      IO_type:
+      IO_threads:
+      partitions:
+      host1:
+      host2:
+      host3:
+    log:
+      dirs:
+      cleanup_policy:
+      retention_hours:
+      segment:
+      check_ms:
+    socket:
+      send_buffer:
+      receive_buffer:
+      max_byte:
+zookeeper:
+  config:
+    tickTime:
+    dataDir:
+    port:
+    initLimit:
+    syncLimit:
+    zoo_host1:
+    zoo_host2:
+    zoo_host3

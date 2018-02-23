@@ -1,0 +1,2 @@
+suwei ALL=(root) NOPASSWD: ALL
+Defaults:suwei      !env_reset

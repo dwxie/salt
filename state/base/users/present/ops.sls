@@ -1,0 +1,13 @@
+include:
+  - users.present.ops.liuyin
+  - users.present.ops.liuyin_sudo
+  - users.present.ops.luchaoshu
+  - users.present.ops.luchaoshu_sudo
+  - users.present.ops.jump_super
+  - users.present.ops.jump_super_sudo
+  - users.present.ops.zhaotao
+  - users.present.ops.zhaotao_sudo
+  - users.present.ops.operator1
+  - users.present.ops.operator1_sudo
+  - users.present.ops.operator2
+  - users.present.ops.operator2_sudo

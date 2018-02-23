@@ -1,0 +1,2 @@
+{% set data = salt['pillar.get']('cos:codisktracker:tool:dbmigrationtool:config') -%}
+{{ data|yaml(False) }}
